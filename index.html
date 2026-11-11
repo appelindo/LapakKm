@@ -465,11 +465,22 @@
   <div class="kepala"><b>Masuk — Khusus Penjual &amp; Admin</b><button class="x" data-tutup>✕</button></div>
   <div class="form">
     <p style="font-size:12.5px;color:var(--teks2);line-height:1.5;margin-bottom:12px">Pembeli <b>tidak perlu masuk</b>. Halaman ini hanya untuk penjual mengelola lapak &amp; pesanan, dan admin mengelola aplikasi.</p>
-    <div class="galat" id="lg-galat"></div>
-    <div class="grup"><label>NIP</label><input id="lg-nip" placeholder="Masukkan NIP" autocomplete="username"></div>
-    <div class="grup"><label>PIN</label><input id="lg-pin" type="password" inputmode="numeric" placeholder="••••••" autocomplete="current-password"></div>
+    <div id="lg-form-masuk">
+      <div class="galat" id="lg-galat"></div>
+      <div class="grup"><label>NIP atau Nama</label><input id="lg-nip" placeholder="NIP (pegawai tetap) atau nama terdaftar" autocomplete="username"></div>
+      <div class="grup"><label>PIN / Password</label><input id="lg-pin" type="password" placeholder="••••••" autocomplete="current-password"></div>
+      <p style="font-size:12.5px;color:var(--teks2);margin-top:10px">Belum punya akun? <a href="#" id="lg-ke-daftar" style="color:var(--oranye);font-weight:700">Daftar di sini</a> — khusus pegawai tanpa NIP (mis. honorer), cukup nama &amp; password.</p>
+    </div>
+    <div id="lg-form-daftar" style="display:none">
+      <div class="galat" id="df-galat"></div>
+      <div class="grup"><label>Nama lengkap</label><input id="df-nama" placeholder="Nama kamu — dipakai untuk masuk" autocomplete="name"></div>
+      <div class="grup"><label>Password</label><input id="df-pin" type="password" placeholder="Minimal 4 karakter" autocomplete="new-password"></div>
+      <div class="grup"><label>Ulangi password</label><input id="df-pin2" type="password" placeholder="Ketik ulang password" autocomplete="new-password"></div>
+      <p style="font-size:12.5px;color:var(--teks2);line-height:1.5;margin-top:10px">Nama harus unik karena dipakai untuk masuk. Bila nama sudah terdaftar, tambahkan pembeda (mis. nama + unit). Sesudah daftar, lengkapi profil lapakmu untuk mulai berjualan.</p>
+      <p style="font-size:12.5px;color:var(--teks2);margin-top:10px">Sudah punya akun? <a href="#" id="df-ke-masuk" style="color:var(--oranye);font-weight:700">Masuk di sini</a></p>
+    </div>
   </div>
-  <div class="tombol-bawah"><button class="btn oranye" id="lg-masuk">Masuk</button></div>
+  <div class="tombol-bawah"><button class="btn oranye" id="lg-masuk">Masuk</button><button class="btn oranye" id="lg-daftar" style="display:none">Daftar &amp; Masuk</button></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -914,7 +925,7 @@ $('btn-masuk').addEventListener('click', () => {
 /* ================= Login & sesi ================= */
 $('lg-masuk').addEventListener('click', async () => {
   const nip = $('lg-nip').value.trim(), pin = $('lg-pin').value.trim();
-  if (!nip || !pin) { tampilGalat('lg-galat', 'NIP dan PIN wajib diisi.'); return; }
+  if (!nip || !pin) { tampilGalat('lg-galat', 'NIP/nama dan PIN/password wajib diisi.'); return; }
   tampilGalat('lg-galat', '');
   const tombol = $('lg-masuk');
   tombol.disabled = true; tombol.textContent = 'Memeriksa…';
@@ -929,6 +940,37 @@ $('lg-masuk').addEventListener('click', async () => {
     tampilGalat('lg-galat', e.message);
   } finally {
     tombol.disabled = false; tombol.textContent = 'Masuk';
+  }
+});
+/* ---- Daftar mandiri (pegawai tanpa NIP): nama + password ---- */
+function modeLogin(modeDaftar){
+  $('lg-form-masuk').style.display = modeDaftar ? 'none' : '';
+  $('lg-form-daftar').style.display = modeDaftar ? '' : 'none';
+  $('lg-masuk').style.display = modeDaftar ? 'none' : '';
+  $('lg-daftar').style.display = modeDaftar ? '' : 'none';
+  tampilGalat('lg-galat', ''); tampilGalat('df-galat', '');
+}
+$('lg-ke-daftar').addEventListener('click', e => { e.preventDefault(); modeLogin(true); });
+$('df-ke-masuk').addEventListener('click', e => { e.preventDefault(); modeLogin(false); });
+$('lg-daftar').addEventListener('click', async () => {
+  const nama = $('df-nama').value.trim(), pin = $('df-pin').value, pin2 = $('df-pin2').value;
+  if (nama.length < 3) { tampilGalat('df-galat', 'Nama minimal 3 karakter.'); return; }
+  if (pin.length < 4) { tampilGalat('df-galat', 'Password minimal 4 karakter.'); return; }
+  if (pin !== pin2) { tampilGalat('df-galat', 'Ulangi password belum sama.'); return; }
+  tampilGalat('df-galat', '');
+  const tombol = $('lg-daftar');
+  tombol.disabled = true; tombol.textContent = 'Mendaftar…';
+  try {
+    const data = await api('daftar', { nama: nama, pin: pin });
+    simpanSesi({ token: data.token, nama: data.nama, peran: data.peran, idLapak: data.idLapak });
+    $('df-pin').value = ''; $('df-pin2').value = '';
+    tutupLembar();
+    toast('Akunmu sudah jadi, ' + (data.nama || 'Penjual') + '. Sekarang lengkapi profil lapakmu, ya.');
+    bukaPenjual();
+  } catch (e) {
+    tampilGalat('df-galat', e.message);
+  } finally {
+    tombol.disabled = false; tombol.textContent = 'Daftar & Masuk';
   }
 });
 $('pj-keluar').addEventListener('click', async () => {
