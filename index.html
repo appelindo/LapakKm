@@ -986,17 +986,48 @@ $('pj-keluar').addEventListener('click', async () => {
 let profilCache = null;
 let qrisData = null;   /* {base64, mime} dari berkas QRIS yang baru dipilih */
 let fotoData = null;   /* {base64, mime} dari berkas foto produk yang baru dipilih */
-function bacaBerkasBase64(input, selesai){
-  const berkas = input.files && input.files[0];
-  if (!berkas) { selesai(null); return; }
+function bacaSebagaiBase64(berkas, selesai, mimePaksa){
   const pembaca = new FileReader();
   pembaca.onload = () => {
     const hasil = String(pembaca.result || '');
     const koma = hasil.indexOf(',');
-    selesai({ base64: koma >= 0 ? hasil.slice(koma + 1) : hasil, mime: berkas.type || 'image/jpeg' });
+    selesai({ base64: koma >= 0 ? hasil.slice(koma + 1) : hasil, mime: mimePaksa || berkas.type || 'image/jpeg' });
   };
   pembaca.onerror = () => selesai(null);
   pembaca.readAsDataURL(berkas);
+}
+/* Baca berkas gambar + perkecil otomatis: sisi terpanjang dibatasi 1280px supaya
+   unggahan dari kamera HP (3–8 MB) jadi ringan. Berkas yang sudah kecil dikirim
+   apa adanya; bila perkecilan gagal, berkas asli tetap dipakai (tidak menghalangi). */
+function bacaBerkasBase64(input, selesai){
+  const berkas = input.files && input.files[0];
+  if (!berkas) { selesai(null); return; }
+  if (!/^image\//.test(berkas.type || '')) { bacaSebagaiBase64(berkas, selesai); return; }
+  const url = URL.createObjectURL(berkas);
+  const img = new Image();
+  img.onload = () => {
+    const maks = 1280;
+    const terpanjang = Math.max(img.naturalWidth || 0, img.naturalHeight || 0);
+    const skala = terpanjang > 0 ? Math.min(1, maks / terpanjang) : 1;
+    if (skala >= 1) { URL.revokeObjectURL(url); bacaSebagaiBase64(berkas, selesai); return; }
+    try {
+      const kanvas = document.createElement('canvas');
+      kanvas.width = Math.round(img.naturalWidth * skala);
+      kanvas.height = Math.round(img.naturalHeight * skala);
+      kanvas.getContext('2d').drawImage(img, 0, 0, kanvas.width, kanvas.height);
+      URL.revokeObjectURL(url);
+      const mimeOut = berkas.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      kanvas.toBlob(blob => {
+        if (!blob) { bacaSebagaiBase64(berkas, selesai); return; }
+        bacaSebagaiBase64(blob, selesai, mimeOut);
+      }, mimeOut, 0.87);
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      bacaSebagaiBase64(berkas, selesai);
+    }
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); bacaSebagaiBase64(berkas, selesai); };
+  img.src = url;
 }
 $('l-qris').addEventListener('change', e => {
   bacaBerkasBase64(e.target, hasil => {
