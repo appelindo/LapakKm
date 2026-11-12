@@ -153,9 +153,6 @@
   .lencana-status.terkirim{background:#fdf3e0;color:#b97b06}
   .lencana-status.dikonfirmasi{background:#e8f1fe;color:#2f6fd0}
   .lencana-status.siap-diambil{background:#e3f6f2;color:#15957f}
-  .pill-pesanan{display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:12px 12px 0;background:#fff;border:1.5px solid var(--oranye);color:var(--oranye);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:700;cursor:pointer;text-align:left}
-  .pill-pesanan .info{margin-left:auto;font-size:12px;color:#888;font-weight:600}
-  .pill-pesanan .siap{background:#26aa99;color:#fff;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:800}
   .kartu-pantu{border:1px solid var(--garis);border-radius:10px;padding:12px;margin:12px 16px 0}
   .kartu-pantu .baris{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;gap:10px}
   .kartu-pantu .kp-kepala{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
@@ -369,8 +366,6 @@
       <div class="sp-titik" id="sp-titik"><i class="aktif"></i><i></i><i></i></div>
     </div>
 
-    <button class="pill-pesanan" id="pill-pesanan-saya">🧾 Pesanan Saya<span class="info" id="pill-pesanan-info"></span></button>
-
     <div class="kategori" id="bar-kategori"></div>
 
     <div class="seksi" id="seksi-po" style="display:none">
@@ -499,6 +494,7 @@
     <a href="#" class="aktif" id="nav-beranda"><span class="ic"><svg class="isi" viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8V21a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 21z" transform="scale(0.92) translate(1,0.4)"/></svg></span>Beranda</a>
     <a href="#" id="nav-keranjang"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 3.5h2l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.9a1.6 1.6 0 0 0 1.6-1.3L20.5 7H6"/><circle cx="10" cy="21" r="1.3"/><circle cx="17.5" cy="21" r="1.3"/></svg></span>Keranjang<span class="lencana-nav" id="nav-keranjang-hitung">0</span></a>
     <a href="#" class="jual" id="nav-jual"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></span>Jual</a>
+    <a href="#" id="nav-pesanan"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9 8.5h6M9 12.5h6"/></svg></span>Pesanan Saya</a>
     <a href="#" id="nav-penjual"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-3.4 4-5 7.5-5s6.3 1.6 7.5 5"/></svg></span><span id="nav-penjual-teks">Penjual</span></a>
     <a href="#" id="nav-admin" style="display:none"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 7.6-7.5 9.5-4.3-1.9-7.5-4.9-7.5-9.5V6z"/><path d="M9 11.8l2.2 2.2L15.4 9.8"/></svg></span>Admin</a>
   </nav>
@@ -2905,7 +2901,8 @@ function gambarPesananSaya(){
   $('ps-sub').textContent = 'Status diambil langsung dari server · diperbarui ' + jamKini_() +
     ' — tutup lalu buka lagi lembar ini untuk menyegarkan.';
 }
-$('pill-pesanan-saya').addEventListener('click', async () => {
+$('nav-pesanan').addEventListener('click', async e => {
+  e.preventDefault();
   bukaLembar('lembar-pesanan-saya');
   gambarPesananSaya();
   try {
