@@ -250,6 +250,7 @@
   .penilaian{font-size:11.5px;color:#888;margin-top:3px}
   .penilaian b{color:#f6a609}
   .lencana-nilai{display:inline-flex;align-items:center;border:1px solid #ecc94b;background:#fffdf4;color:#7a5b00;font-size:11px;font-weight:700;border-radius:3px;padding:1px 6px;margin-top:5px}
+  .lencana-nilai.kosong{border-color:#ddd;background:#fafafa;color:#999;font-weight:600}
   .baris-harga{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:4px}
   .baris-harga .harga{margin-top:0}
   .terjual{font-size:11px;color:#555;white-space:nowrap}
@@ -983,7 +984,8 @@ function kartuHtml(p, kecil){
   const lencanaHabis = habis ? '<span class="lencana habis">HABIS</span>' : '';
   const namaLapak = (p.lapak && p.lapak.nama) || '';
   const nilaiHtml = (p.penilaian && p.penilaian.jumlah)
-    ? '<div><span class="lencana-nilai">⭐ ' + esc(String(p.penilaian.rata).replace('.', ',')) + '</span></div>' : '';
+    ? '<div><span class="lencana-nilai">⭐ ' + esc(String(p.penilaian.rata).replace('.', ',')) + '</span></div>'
+    : '<div><span class="lencana-nilai kosong">⭐ Belum ada ulasan</span></div>';
   const barisHarga = '<div class="baris-harga"><span class="harga">' + hargaTampil(p) + '</span>' +
     '<span class="terjual">' + (Number(p.terjual) || 0) + ' terjual</span></div>';
   if (kecil) {
