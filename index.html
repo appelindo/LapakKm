@@ -527,15 +527,15 @@
     <p style="font-size:12.5px;color:var(--teks2);line-height:1.5;margin-bottom:12px">Pembeli <b>tidak perlu masuk</b>. Halaman ini hanya untuk penjual mengelola lapak &amp; pesanan, dan admin mengelola aplikasi.</p>
     <div id="lg-form-masuk">
       <div class="galat" id="lg-galat"></div>
-      <div class="grup"><label>NIP atau Nama</label><input id="lg-nip" placeholder="NIP (pegawai tetap) atau nama terdaftar" autocomplete="username"></div>
-      <div class="grup"><label>PIN / Password</label><input id="lg-pin" type="password" placeholder="••••••" autocomplete="current-password"></div>
-      <p style="font-size:12.5px;color:var(--teks2);margin-top:10px">Belum punya akun? <a href="#" id="lg-ke-daftar" style="color:var(--oranye);font-weight:700">Daftar di sini</a> — khusus pegawai tanpa NIP (mis. honorer), cukup nama &amp; password.</p>
+      <div class="grup"><label>Nama</label><input id="lg-nip" placeholder="Nama kamu yang terdaftar" autocomplete="username"></div>
+      <div class="grup"><label>PIN</label><input id="lg-pin" type="password" placeholder="••••••" autocomplete="current-password"></div>
+      <p style="font-size:12.5px;color:var(--teks2);margin-top:10px">Belum punya akun? <a href="#" id="lg-ke-daftar" style="color:var(--oranye);font-weight:700">Daftar di sini</a> — cukup nama &amp; PIN, langsung bisa berjualan.</p>
     </div>
     <div id="lg-form-daftar" style="display:none">
       <div class="galat" id="df-galat"></div>
       <div class="grup"><label>Nama lengkap</label><input id="df-nama" placeholder="Nama kamu — dipakai untuk masuk" autocomplete="name"></div>
-      <div class="grup"><label>Password</label><input id="df-pin" type="password" placeholder="Minimal 4 karakter" autocomplete="new-password"></div>
-      <div class="grup"><label>Ulangi password</label><input id="df-pin2" type="password" placeholder="Ketik ulang password" autocomplete="new-password"></div>
+      <div class="grup"><label>PIN</label><input id="df-pin" type="password" placeholder="Minimal 4 karakter" autocomplete="new-password"></div>
+      <div class="grup"><label>Ulangi PIN</label><input id="df-pin2" type="password" placeholder="Ketik ulang PIN" autocomplete="new-password"></div>
       <p style="font-size:12.5px;color:var(--teks2);line-height:1.5;margin-top:10px">Nama harus unik karena dipakai untuk masuk. Bila nama sudah terdaftar, tambahkan pembeda (mis. nama + unit). Sesudah daftar, lengkapi profil lapakmu untuk mulai berjualan.</p>
       <p style="font-size:12.5px;color:var(--teks2);margin-top:10px">Sudah punya akun? <a href="#" id="df-ke-masuk" style="color:var(--oranye);font-weight:700">Masuk di sini</a></p>
     </div>
@@ -1535,7 +1535,7 @@ $('btn-masuk').addEventListener('click', () => {
 /* ================= Login & sesi ================= */
 $('lg-masuk').addEventListener('click', async () => {
   const nip = $('lg-nip').value.trim(), pin = $('lg-pin').value.trim();
-  if (!nip || !pin) { tampilGalat('lg-galat', 'NIP/nama dan PIN/password wajib diisi.'); return; }
+  if (!nip || !pin) { tampilGalat('lg-galat', 'Nama dan PIN wajib diisi.'); return; }
   tampilGalat('lg-galat', '');
   const tombol = $('lg-masuk');
   tombol.disabled = true; tombol.textContent = 'Memeriksa…';
@@ -1565,8 +1565,8 @@ $('df-ke-masuk').addEventListener('click', e => { e.preventDefault(); modeLogin(
 $('lg-daftar').addEventListener('click', async () => {
   const nama = $('df-nama').value.trim(), pin = $('df-pin').value, pin2 = $('df-pin2').value;
   if (nama.length < 3) { tampilGalat('df-galat', 'Nama minimal 3 karakter.'); return; }
-  if (pin.length < 4) { tampilGalat('df-galat', 'Password minimal 4 karakter.'); return; }
-  if (pin !== pin2) { tampilGalat('df-galat', 'Ulangi password belum sama.'); return; }
+  if (pin.length < 4) { tampilGalat('df-galat', 'PIN minimal 4 karakter.'); return; }
+  if (pin !== pin2) { tampilGalat('df-galat', 'Ulangi PIN belum sama.'); return; }
   tampilGalat('df-galat', '');
   const tombol = $('lg-daftar');
   tombol.disabled = true; tombol.textContent = 'Mendaftar…';
