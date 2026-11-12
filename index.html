@@ -249,6 +249,11 @@
   /* ===== Ulasan pembeli ===== */
   .penilaian{font-size:11.5px;color:#888;margin-top:3px}
   .penilaian b{color:#f6a609}
+  .lencana-nilai{display:inline-flex;align-items:center;border:1px solid #ecc94b;background:#fffdf4;color:#7a5b00;font-size:11px;font-weight:700;border-radius:3px;padding:1px 6px;margin-top:5px}
+  .baris-harga{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:4px}
+  .baris-harga .harga{margin-top:0}
+  .terjual{font-size:11px;color:#555;white-space:nowrap}
+  .isi-po .terjual{font-size:10px}
   .bintang-teks{color:#f6a609;letter-spacing:1px;font-size:12.5px}
   .btn-ulasan{display:block;width:100%;margin-top:10px;background:#f6a609;color:#fff;border:none;font-weight:800;font-size:13.5px;padding:10px;border-radius:9px;cursor:pointer}
   .sudah-ulasan{margin-top:10px;background:#fdf6e3;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#7a5b06;line-height:1.55}
@@ -978,14 +983,16 @@ function kartuHtml(p, kecil){
   const lencanaHabis = habis ? '<span class="lencana habis">HABIS</span>' : '';
   const namaLapak = (p.lapak && p.lapak.nama) || '';
   const nilaiHtml = (p.penilaian && p.penilaian.jumlah)
-    ? '<div class="penilaian"><b>★ ' + esc(p.penilaian.rata) + '</b> (' + p.penilaian.jumlah + ' ulasan)</div>' : '';
+    ? '<div><span class="lencana-nilai">⭐ ' + esc(String(p.penilaian.rata).replace('.', ',')) + '</span></div>' : '';
+  const barisHarga = '<div class="baris-harga"><span class="harga">' + hargaTampil(p) + '</span>' +
+    '<span class="terjual">' + (Number(p.terjual) || 0) + ' terjual</span></div>';
   if (kecil) {
     const infoPo = p.tglAmbil ? 'Ambil: ' + esc(p.tglAmbil) : ('Stok: ' + esc(p.stok == null ? '–' : p.stok));
     return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
-      '<div class="isi-po"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' + nilaiHtml + '<div class="kecil">' + infoPo + '</div></div>';
+      '<div class="isi-po"><div class="nm">' + esc(p.nama) + '</div>' + nilaiHtml + barisHarga + '<div class="kecil">' + infoPo + '</div></div>';
   }
   return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
-    '<div class="isi"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' + nilaiHtml +
+    '<div class="isi"><div class="nm">' + esc(p.nama) + '</div>' + nilaiHtml + barisHarga +
     '<div class="penjual">🧑 ' + esc(namaLapak) + '</div>' +
     '<div class="meta"><span>' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + '</span><span>Stok ' + esc(p.stok == null ? '–' : p.stok) + '</span></div>' +
     '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '🛒 Order') + '</button>' +
@@ -1090,6 +1097,7 @@ function isiDetail_(p, l, ulasan){
       meta = '✅ Ready · Stok: ' + esc(p.stok == null ? '–' : p.stok);
     }
     if (p.status === 'HABIS') meta += '<br>⚠️ Stok sedang habis, belum bisa diorder.';
+    meta += '<br>Terjual: ' + (Number(p.terjual) || 0);
     $('d-meta').innerHTML = meta;
     $('d-desk').textContent = p.deskripsi || 'Penjual belum menulis deskripsi.';
     $('d-penjual').textContent = l.nama || '';
@@ -2067,7 +2075,7 @@ function renderProdukSaya(){
     d.innerHTML =
       '<div class="atas"><div class="mini ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + '</div>' +
       '<div style="flex:1"><div class="nm">' + esc(p.nama) + '</div>' +
-      '<div class="info">' + hargaInfo + ' · ' + esc(p.kategori || '') + ' · ' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + ' · Stok ' + esc(p.stok == null ? '–' : p.stok) + infoVariasi + infoNilai + '</div>' +
+      '<div class="info">' + hargaInfo + ' · ' + esc(p.kategori || '') + ' · ' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + ' · Stok ' + esc(p.stok == null ? '–' : p.stok) + ' · Terjual ' + (Number(p.terjual) || 0) + infoVariasi + infoNilai + '</div>' +
       '<span class="lencana-status ' + statusKelas + '">' + esc(p.status || '') + '</span></div></div>' +
       '<div class="aksi"><button class="btn-kecil oranye" data-aksi="UBAH">Ubah</button>' + tombolStatus + '</div>';
     d.querySelectorAll('[data-aksi]').forEach(b => b.addEventListener('click', () => {
