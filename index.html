@@ -1346,7 +1346,7 @@ $('kr-checkout').addEventListener('click', () => {
   checkoutKtx = { metode: 'TUNAI' };
   document.querySelectorAll('.opsi-bayar2').forEach(x => x.classList.toggle('terpilih', x.dataset.bayar === 'TUNAI'));
   renderRingkasanCheckout();
-  sembunyikanGalat('co-galat');
+  tampilGalat('co-galat', '');
   bukaLembar('lembar-checkout');
 });
 function renderRingkasanCheckout(){
@@ -1374,7 +1374,7 @@ $('co-kirim').addEventListener('click', async () => {
   $('s-co-pembeli').style.display = nama ? 'none' : 'block';
   $('s-co-wa').style.display = noWa ? 'none' : 'block';
   if (!nama || !noWa) { toast('Nama dan nomor WhatsApp wajib diisi.'); return; }
-  sembunyikanGalat('co-galat');
+  tampilGalat('co-galat', '');
   const grupKode = 'GRP-' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
   const tombolKirim = $('co-kirim');
   tombolKirim.disabled = true;
