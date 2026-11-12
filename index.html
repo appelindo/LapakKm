@@ -383,12 +383,30 @@
     <div class="penjual-box">
       <div class="ava">🧑‍🍳</div>
       <div><b id="d-penjual"></b><span id="d-lokasi"></span></div>
+      <button class="btn-kecil oranye" id="d-toko" style="margin-left:auto">🏪 Kunjungi Toko</button>
     </div>
     <button class="tautan-lapor" id="d-lapor">🚩 Laporkan jualan ini</button>
   </div>
   <div class="tombol-bawah">
     <button class="btn polos" id="d-bagikan">🔗 Bagikan</button>
     <button class="btn oranye" id="d-order">🛒 Order Sekarang</button>
+  </div>
+</div>
+
+<!-- ===== Lembar TOKO (halaman toko penjual) ===== -->
+<div class="lembar" id="lembar-toko">
+  <div class="pegangan"></div>
+  <div class="kepala"><b>🏪 Halaman Toko</b><button class="x" data-tutup>✕</button></div>
+  <div class="isi">
+    <div class="penjual-box" style="margin-top:0">
+      <div class="ava">🧑‍🍳</div>
+      <div><b id="t-nama"></b><span id="t-lokasi"></span></div>
+    </div>
+    <div class="sub" style="font-weight:700;margin:14px 0 8px">Semua jualan toko ini</div>
+    <div class="grid" id="t-produk" style="border-radius:8px"></div>
+  </div>
+  <div class="tombol-bawah">
+    <button class="btn oranye" id="t-chat">💬 Chat Penjual</button>
   </div>
 </div>
 
@@ -845,6 +863,42 @@ async function segarkanDetail_(idProduk){
   } catch (e) { /* abaikan */ }
 }
 $('d-order').addEventListener('click', () => { if (produkAktif) bukaOrder(produkAktif); });
+
+/* ================= Halaman toko penjual =================
+   Menampilkan seluruh jualan yang tayang dari satu lapak. Datanya diambil dari
+   katalog yang sudah termuat (semuaProduk), jadi terbuka seketika juga. */
+let tokoAktif = null;
+function bukaToko(){
+  const l = (produkAktif && (produkAktif.lapakDetail || produkAktif.lapak)) || null;
+  if (!l || !l.id) { toast('Info toko tidak tersedia.'); return; }
+  tokoAktif = l;
+  $('t-nama').textContent = l.nama || 'Toko Penjual';
+  $('t-lokasi').textContent = [l.tim, l.ruangan].filter(Boolean).join(' · ');
+  const daftar = semuaProduk.filter(p => p.lapak && p.lapak.id === l.id);
+  const wadah = $('t-produk');
+  wadah.innerHTML = '';
+  if (!daftar.length) {
+    wadah.innerHTML = '<p class="sub" style="grid-column:1/-1;padding:6px">Belum ada jualan yang tayang dari toko ini.</p>';
+  }
+  daftar.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'kartu';
+    d.innerHTML = kartuHtml(p, false);
+    const tombol = d.querySelector('.btn-order');
+    if (tombol) tombol.addEventListener('click', e => { e.stopPropagation(); bukaOrder(p); });
+    d.addEventListener('click', () => bukaDetail(p.id));
+    wadah.appendChild(d);
+  });
+  const tombolChat = $('t-chat');
+  if (l.noWa) {
+    tombolChat.style.display = '';
+    tombolChat.onclick = () => window.open(tautanWa(l.noWa, 'Halo ' + (l.nama || 'penjual') + ', saya melihat toko Anda di LapakKM.'), '_blank');
+  } else {
+    tombolChat.style.display = 'none';
+  }
+  bukaLembar('lembar-toko');
+}
+$('d-toko').addEventListener('click', bukaToko);
 $('d-bagikan').addEventListener('click', () => { if (produkAktif) bagikanProduk(produkAktif); });
 $('d-lapor').addEventListener('click', () => {
   if (!produkAktif) return;
