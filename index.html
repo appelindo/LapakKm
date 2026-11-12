@@ -500,7 +500,7 @@
   <div class="sukses">
     <div class="centang">✓</div>
     <b>Pesanan Terkirim!</b>
-    <p>Pesananmu sudah masuk ke penjual dan <b>menunggu konfirmasi</b>.<br>Simpan kode pesanan ini:</p>
+    <p>Pesananmu sudah masuk ke penjual dan <b>menunggu konfirmasi</b>.<br>Simpan kode pesanan ini — menekan <b>Selesai</b> akan membuka WhatsApp penjual untuk meneruskan pesananmu:</p>
     <div class="kode" id="k-kode">—</div>
   </div>
   <div class="status-alur">
@@ -519,7 +519,7 @@
   <div class="kotak" id="k-info-bayar"></div>
   <div class="tombol-bawah">
     <button class="btn wa" id="k-chat">💬 Chat Penjual</button>
-    <button class="btn oranye" data-tutup style="flex:0 0 130px">Selesai</button>
+    <button class="btn oranye" id="k-selesai" style="flex:0 0 130px">Selesai</button>
   </div>
 </div>
 
@@ -1212,6 +1212,13 @@ function tampilKonfirmasi(data, ktx){
     'Pembayaran: ' + (LABEL_BAYAR[ktx.metode] || ktx.metode) + '\n' +
     'Mohon konfirmasinya, terima kasih.';
   $('k-chat').onclick = () => { window.open(tautanWa(lapak.noWa, pesan), '_blank'); };
+  // Tombol Selesai SEKALIGUS membuka WA penjual (pesan yang sama seperti
+  // tombol Chat Penjual), baru menutup lembar — pemberitahuan WhatsApp ke
+  // penjual tidak lagi bergantung pembeli ingat mengeklik Chat lebih dulu.
+  $('k-selesai').onclick = () => {
+    if (lapak.noWa) window.open(tautanWa(lapak.noWa, pesan), '_blank');
+    tutupLembar();
+  };
   bukaLembar('lembar-konfirmasi');
 }
 
