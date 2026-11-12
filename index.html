@@ -153,6 +153,8 @@
   .lembar .desk{font-size:13.5px;line-height:1.55;margin-top:10px;color:#333;white-space:pre-wrap}
   .penjual-box{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px;background:#fafafa;border-radius:8px}
   .penjual-box .ava{width:42px;height:42px;border-radius:50%;background:var(--oranye-muda);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 42px}
+  .penjual-box .ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .kartu-id .ava-besar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
   .penjual-box b{font-size:13.5px;display:block}
   .penjual-box span{font-size:11.5px;color:var(--teks2)}
   .tombol-bawah{display:flex;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom));position:sticky;bottom:0;background:#fff;border-top:1px solid var(--garis)}
@@ -333,6 +335,8 @@
       </div>
     </div>
 
+    <div class="bar-view" id="pj-sub-bar" style="display:none;margin-top:10px"><button class="btn-kembali" id="pj-sub-kembali">‹ Menu</button><b id="pj-sub-judul"></b></div>
+
     <div class="blok" id="pj-bungkus-profil">
       <h3 id="pj-judul-profil">Profil Lapak</h3>
       <p class="sub" id="pj-sub-profil">Lengkapi profil lapakmu sekali saja supaya bisa mulai berjualan.</p>
@@ -343,6 +347,11 @@
         <div class="grup"><label>Tim / Unit</label><input id="l-tim" placeholder="cth. Tim MPPP"></div>
         <div class="grup"><label>Ruangan / Lokasi Ambil</label><input id="l-ruang" placeholder="cth. Lantai 3, dekat pantry"></div>
         <div class="grup"><label>Nomor Rekening <small>(untuk pembayaran Transfer)</small></label><input id="l-rek" placeholder="cth. Mandiri 1370011223344"></div>
+        <div class="grup"><label>Foto Profil Toko <small>(tampil di halaman toko &amp; di produkmu)</small></label>
+          <input type="file" id="l-foto" accept="image/*">
+          <img class="pratinjau" id="l-foto-img" alt="Pratinjau foto profil toko">
+          <button type="button" class="btn-kecil" id="l-foto-hapus" style="display:none;margin-top:6px">Hapus Foto Profil</button>
+        </div>
         <div class="grup"><label>Gambar QRIS <small>(untuk pembayaran QRIS)</small></label>
           <input type="file" id="l-qris" accept="image/*">
           <img class="pratinjau" id="l-qris-img" alt="Pratinjau QRIS">
@@ -467,7 +476,7 @@
     <div class="desk" id="d-desk"></div>
     <div id="d-penilaian"></div>
     <div class="penjual-box">
-      <div class="ava">🧑‍🍳</div>
+      <div class="ava" id="d-ava">🧑‍🍳</div>
       <div><b id="d-penjual"></b><span id="d-lokasi"></span></div>
       <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px">
         <button class="btn-kecil oranye" id="d-toko">🏪 Kunjungi Toko</button>
@@ -489,7 +498,7 @@
   <div class="kepala"><b>🏪 Halaman Toko</b><button class="x" data-tutup>✕</button></div>
   <div class="isi">
     <div class="penjual-box" style="margin-top:0">
-      <div class="ava">🧑‍🍳</div>
+      <div class="ava" id="t-ava">🧑‍🍳</div>
       <div><b id="t-nama"></b><span id="t-lokasi"></span></div>
     </div>
     <div class="sub" style="font-weight:700;margin:14px 0 8px">Semua jualan toko ini</div>
@@ -1085,6 +1094,7 @@ function isiDetail_(p, l, ulasan){
     $('d-desk').textContent = p.deskripsi || 'Penjual belum menulis deskripsi.';
     $('d-penjual').textContent = l.nama || '';
     $('d-lokasi').textContent = [l.tim, l.ruangan].filter(Boolean).join(' · ');
+    isiAvatar($('d-ava'), l.fotoUrl, '🧑‍🍳');
     $('d-tanya').style.display = l.id ? '' : 'none';
     const tombolOrder = $('d-order');
     if (p.status === 'HABIS') { tombolOrder.disabled = true; tombolOrder.textContent = 'Stok Habis'; }
@@ -1140,6 +1150,7 @@ function bukaToko(lapakLangsung){
   tokoAktif = l;
   $('t-nama').textContent = l.nama || 'Toko Penjual';
   $('t-lokasi').textContent = [l.tim, l.ruangan].filter(Boolean).join(' · ');
+  isiAvatar($('t-ava'), l.fotoUrl, '🧑‍🍳');
   const daftar = semuaProduk.filter(p => p.lapak && p.lapak.id === l.id);
   const wadah = $('t-produk');
   wadah.innerHTML = '';
@@ -1168,21 +1179,48 @@ function bukaToko(lapakLangsung){
 }
 $('d-toko').addEventListener('click', () => bukaToko());
 
-/* ---------- Menu penjual (gaya Shopee Seller) ---------- */
-function gulirKeBlok_(id){ const el = $(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+/* ---------- Menu penjual: tiap menu adalah halaman sendiri ----------
+   Dahulu semua blok bertumpuk dalam satu halaman panjang dan menu hanya
+   menggulir ke bloknya. Sekarang memilih menu membuka halamannya sendiri
+   (blok lain disembunyikan) dengan tombol kembali ke menu; halaman yang
+   sedang dibuka diingat supaya ikut pulih sesudah refresh. */
+let subPenjualAktif = '';
+try { subPenjualAktif = localStorage.getItem('lapakkmSubPenjual') || ''; } catch (e) {}
+const JUDUL_SUB_PENJUAL = { profil: 'Profil Lapak', produk: 'Produk Saya', pesanan: 'Pesanan Masuk' };
+function aturSubPenjual(sub){
+  subPenjualAktif = sub || '';
+  try { localStorage.setItem('lapakkmSubPenjual', subPenjualAktif); } catch (e) {}
+  terapkanSubPenjual();
+}
+function terapkanSubPenjual(){
+  const punyaLapak = !!(profilCache && profilCache.lapak);
+  // Belum punya lapak: satu-satunya halaman yang berlaku adalah buat profil.
+  const sub = punyaLapak ? subPenjualAktif : 'profil';
+  $('pj-bungkus-profil').style.display = (sub === 'profil') ? '' : 'none';
+  $('pj-bungkus-produk').style.display = (sub === 'produk') ? '' : 'none';
+  $('pj-bungkus-pesanan').style.display = (sub === 'pesanan') ? '' : 'none';
+  $('pj-bungkus-menu').style.display = (punyaLapak && !sub) ? '' : 'none';
+  const bar = $('pj-sub-bar');
+  if (punyaLapak && sub) {
+    bar.style.display = '';
+    $('pj-sub-judul').textContent = JUDUL_SUB_PENJUAL[sub] || '';
+  } else bar.style.display = 'none';
+  window.scrollTo(0, 0);
+}
+$('pj-sub-kembali').addEventListener('click', () => aturSubPenjual(''));
 document.querySelectorAll('#pj-bungkus-menu .mi').forEach(b => b.addEventListener('click', () => {
   const menu = b.dataset.menu;
-  if (menu === 'produk') gulirKeBlok_('pj-bungkus-produk');
-  else if (menu === 'pesanan') gulirKeBlok_('pj-bungkus-pesanan');
-  else if (menu === 'profil') gulirKeBlok_('pj-bungkus-profil');
-  else if (menu === 'tambah') { gulirKeBlok_('pj-bungkus-produk'); $('pj-tambah-produk').click(); }
+  if (menu === 'produk') aturSubPenjual('produk');
+  else if (menu === 'pesanan') aturSubPenjual('pesanan');
+  else if (menu === 'profil') aturSubPenjual('profil');
+  else if (menu === 'tambah') { aturSubPenjual('produk'); $('pj-tambah-produk').click(); }
   else if (menu === 'toko') {
     const lk = (profilCache && profilCache.lapak) || null;
     if (!lk || !lk.id) { toast('Profil lapak belum lengkap.'); return; }
-    bukaToko({ id: lk.id, nama: lk.nama, tim: lk.tim, ruangan: lk.ruangan, noWa: lk.noWa });
+    bukaToko({ id: lk.id, nama: lk.nama, tim: lk.tim, ruangan: lk.ruangan, noWa: lk.noWa, fotoUrl: lk.fotoUrl });
   }
 }));
-$('pj-kartu-id').addEventListener('click', () => gulirKeBlok_('pj-bungkus-profil'));
+$('pj-kartu-id').addEventListener('click', () => aturSubPenjual('profil'));
 function perbaruiMenuPenjual_(daftar){
   const hitung = s => daftar.filter(o => o.status === s).length;
   const perlu = hitung('TERKIRIM');
@@ -1712,6 +1750,8 @@ function tampilView(nama){
   $('nav-beranda').classList.toggle('aktif', nama === 'beranda');
   $('nav-penjual').classList.toggle('aktif', nama === 'penjual');
   $('nav-admin').classList.toggle('aktif', nama === 'admin');
+  // Ingat halaman terakhir supaya sesudah refresh tidak balik ke beranda.
+  try { localStorage.setItem('lapakkmView', nama); } catch (e) {}
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => tampilView(b.dataset.nav)));
@@ -1723,6 +1763,7 @@ $('nav-jual').addEventListener('click', e => {
   if (!sesi) { bukaLembar('lembar-login'); return; }
   bukaPenjual(() => {
     if (profilCache && profilCache.lapak) {
+      aturSubPenjual('produk');
       bukaFormProduk(null);
       $('form-produk').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -1797,6 +1838,14 @@ $('pj-keluar').addEventListener('click', async () => {
 let profilCache = null;
 let qrisData = null;   /* {base64, mime} dari berkas QRIS yang baru dipilih */
 let fotoData = null;   /* {base64, mime} dari berkas foto produk yang baru dipilih */
+let fotoProfilData = null;   /* {base64, mime} foto profil toko yang baru dipilih */
+let fotoProfilDihapus = false;
+/* Isi lingkaran avatar: foto toko bila ada, teks cadangan (emoji/huruf) bila tidak. */
+function isiAvatar(el, url, cadangan){
+  if (!el) return;
+  if (url) el.innerHTML = '<img src="' + esc(url) + '" alt="Foto toko">';
+  else el.textContent = cadangan;
+}
 function bacaSebagaiBase64(berkas, selesai, mimePaksa){
   const pembaca = new FileReader();
   pembaca.onload = () => {
@@ -1850,6 +1899,25 @@ $('l-qris').addEventListener('change', e => {
     }
   });
 });
+$('l-foto').addEventListener('change', e => {
+  bacaBerkasBase64(e.target, hasil => {
+    fotoProfilData = hasil;
+    if (hasil) {
+      fotoProfilDihapus = false;
+      const img = $('l-foto-img');
+      img.src = 'data:' + hasil.mime + ';base64,' + hasil.base64;
+      img.style.display = 'block';
+      $('l-foto-hapus').style.display = '';
+    }
+  });
+});
+$('l-foto-hapus').addEventListener('click', () => {
+  fotoProfilData = null;
+  fotoProfilDihapus = true;
+  $('l-foto').value = '';
+  $('l-foto-img').style.display = 'none';
+  $('l-foto-hapus').style.display = 'none';
+});
 $('pr-foto').addEventListener('change', e => {
   bacaBerkasBase64(e.target, hasil => {
     fotoData = hasil;
@@ -1873,7 +1941,8 @@ async function muatProfil(sesudah){
     const lapak = data.lapak;
     const namaTampil = lapak ? (lapak.nama || '') : (pg.nama || sesi.nama || '');
     $('pj-lapak-nama').textContent = namaTampil || 'Lapak Saya';
-    $('pj-ava').textContent = (namaTampil || 'L').trim().charAt(0).toUpperCase() || 'L';
+    if (lapak && lapak.fotoUrl) $('pj-ava').innerHTML = '<img src="' + esc(lapak.fotoUrl) + '" alt="Foto profil toko">';
+    else $('pj-ava').textContent = (namaTampil || 'L').trim().charAt(0).toUpperCase() || 'L';
     $('pj-pemilik').textContent = lapak
       ? [pg.nama || sesi.nama || '', lapak.tim, lapak.ruangan].filter(Boolean).join(' · ')
       : 'Belum punya lapak — lengkapi profil di bawah untuk mulai berjualan';
@@ -1883,9 +1952,7 @@ async function muatProfil(sesudah){
       $('pj-ringkas-profil').style.display = 'none';
       $('form-lapak').style.display = '';
       isiFormLapak(null, pg);
-      $('pj-bungkus-menu').style.display = 'none';
-      $('pj-bungkus-produk').style.display = 'none';
-      $('pj-bungkus-pesanan').style.display = 'none';
+      terapkanSubPenjual();
     } else {
       $('pj-judul-profil').textContent = 'Profil Lapak';
       $('pj-sub-profil').textContent = '';
@@ -1894,6 +1961,7 @@ async function muatProfil(sesudah){
       ringkas.innerHTML =
         '<div class="item"><div class="nm">' + esc(lapak.nama || lapak.namaLapak || '') + '</div>' +
         '<div class="info">WhatsApp: ' + esc(waIndo(lapak.noWa) || '–') + '<br>Tim: ' + esc(lapak.tim || '–') + ' · Ruangan: ' + esc(lapak.ruangan || '–') + '<br>Rekening: ' + esc(lapak.noRekening || '–') + '</div>' +
+        (lapak.fotoUrl ? '<img class="pratinjau" style="display:block" src="' + esc(lapak.fotoUrl) + '" alt="Foto profil toko">' : '') +
         (lapak.qrisUrl ? '<img class="pratinjau" style="display:block" src="' + esc(lapak.qrisUrl) + '" alt="QRIS lapak">' : '<div class="info">QRIS belum diunggah.</div>') +
         '<div class="aksi"><button type="button" class="btn-kecil" id="pj-ubah-profil">Ubah Profil</button></div></div>';
       $('pj-ubah-profil').addEventListener('click', () => {
@@ -1902,9 +1970,7 @@ async function muatProfil(sesudah){
       });
       $('form-lapak').style.display = 'none';
       isiFormLapak(lapak, pg);
-      $('pj-bungkus-menu').style.display = '';
-      $('pj-bungkus-produk').style.display = '';
-      $('pj-bungkus-pesanan').style.display = '';
+      terapkanSubPenjual();
       muatProdukSaya();
       muatPesananSaya();
     }
@@ -1915,8 +1981,12 @@ async function muatProfil(sesudah){
 }
 function isiFormLapak(lapak, pg){
   qrisData = null;
+  fotoProfilData = null;
+  fotoProfilDihapus = false;
   $('l-qris').value = '';
+  $('l-foto').value = '';
   const img = $('l-qris-img');
+  const imgF = $('l-foto-img');
   if (lapak) {
     $('l-nama').value = lapak.nama || lapak.namaLapak || '';
     $('l-wa').value = waIndo(lapak.noWa);
@@ -1924,10 +1994,13 @@ function isiFormLapak(lapak, pg){
     $('l-ruang').value = lapak.ruangan || '';
     $('l-rek').value = lapak.noRekening || '';
     if (lapak.qrisUrl) { img.src = lapak.qrisUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
+    if (lapak.fotoUrl) { imgF.src = lapak.fotoUrl; imgF.style.display = 'block'; $('l-foto-hapus').style.display = ''; }
+    else { imgF.style.display = 'none'; $('l-foto-hapus').style.display = 'none'; }
   } else {
     $('l-nama').value = ''; $('l-wa').value = waIndo(pg && pg.noWa);
     $('l-tim').value = (pg && pg.tim) || ''; $('l-ruang').value = ''; $('l-rek').value = '';
     img.style.display = 'none';
+    imgF.style.display = 'none'; $('l-foto-hapus').style.display = 'none';
   }
   tampilGalat('l-galat', '');
 }
@@ -1941,6 +2014,8 @@ $('form-lapak').addEventListener('submit', async e => {
     tim: $('l-tim').value.trim(), ruangan: $('l-ruang').value.trim(), noRekening: $('l-rek').value.trim()
   };
   if (qrisData) { kirim.qrisBase64 = qrisData.base64; kirim.qrisMime = qrisData.mime; }
+  if (fotoProfilData) { kirim.fotoBase64 = fotoProfilData.base64; kirim.fotoMime = fotoProfilData.mime; }
+  else if (fotoProfilDihapus) { kirim.fotoHapus = true; }
   const tombol = e.target.querySelector('button[type="submit"]');
   tombol.disabled = true; tombol.textContent = 'Menyimpan…';
   try {
@@ -2585,6 +2660,14 @@ $('ps-cari-btn').addEventListener('click', async () => {
 /* ================= Awal ================= */
 bangunKategori();
 segarkanUiSesi();
+(function pulihkanView(){
+  // Refresh halaman mengembalikan tampilan terakhir (Lapak Saya / Admin),
+  // selama sesi masih masuk — bukan selalu balik ke beranda.
+  let v = '';
+  try { v = localStorage.getItem('lapakkmView') || ''; } catch (e) {}
+  if (v === 'penjual' && sesi) bukaPenjual();
+  else if (v === 'admin' && sesi && sesi.peran === 'ADMIN') bukaAdmin();
+})();
 muatKatalog();
 segarkanInfoPill_();
 if (kodePesananTersimpan().length) tarikPesananSaya().catch(() => {});
