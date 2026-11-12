@@ -2195,23 +2195,33 @@ function kodePesananTersimpan(){
     return Array.isArray(mentah) ? mentah.filter(k => /^(LKM|GRP)-[0-9A-F]{6}$/.test(k)) : [];
   } catch (e) { return []; }
 }
+let sedangTarikPesanan = false;
 function simpanKodePesanan(kode){
   if (!/^(LKM|GRP)-[0-9A-F]{6}$/.test(kode || '')) return;
+  const sudahAda = kodePesananTersimpan().includes(kode);
   const daftar = kodePesananTersimpan().filter(k => k !== kode);
   daftar.unshift(kode);
   try { localStorage.setItem(KUNCI_PESANAN_SAYA, JSON.stringify(daftar.slice(0, 30))); } catch (e) {}
   segarkanInfoPill_();
+  // Kode BARU (baru selesai memesan/checkout): tarik statusnya sekalian supaya
+  // penanda di tombol Pesanan Saya langsung akurat tanpa menunggu lembar dibuka.
+  if (!sudahAda && !sedangTarikPesanan) tarikPesananSaya().catch(() => {});
 }
 async function tarikPesananSaya(cari){
-  const payload = { kode: kodePesananTersimpan() };
-  if (cari) { payload.nama = cari.nama; payload.noWa = cari.noWa; }
-  const data = await api('pesananPembeli', payload);
-  pesananSayaCache = data.pesanan || [];
-  pesananSayaDimuat = true;
-  // Hasil pencarian ikut disimpan: riwayat menempel lagi di HP ini.
-  pesananSayaCache.forEach(p => { simpanKodePesanan(p.grup || p.id); });
-  segarkanInfoPill_();
-  return pesananSayaCache;
+  sedangTarikPesanan = true;
+  try {
+    const payload = { kode: kodePesananTersimpan() };
+    if (cari) { payload.nama = cari.nama; payload.noWa = cari.noWa; }
+    const data = await api('pesananPembeli', payload);
+    pesananSayaCache = data.pesanan || [];
+    pesananSayaDimuat = true;
+    // Hasil pencarian ikut disimpan: riwayat menempel lagi di HP ini.
+    pesananSayaCache.forEach(p => { simpanKodePesanan(p.grup || p.id); });
+    segarkanInfoPill_();
+    return pesananSayaCache;
+  } finally {
+    sedangTarikPesanan = false;
+  }
 }
 function segarkanInfoPill_(){
   const info = $('pill-pesanan-info');
