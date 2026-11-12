@@ -944,7 +944,7 @@ function isiDetail_(p, l){
     $('d-desk').textContent = p.deskripsi || 'Penjual belum menulis deskripsi.';
     $('d-penjual').textContent = l.nama || '';
     $('d-lokasi').textContent = [l.tim, l.ruangan].filter(Boolean).join(' · ');
-    $('d-tanya').style.display = l.noWa ? '' : 'none';
+    $('d-tanya').style.display = l.id ? '' : 'none';
     const tombolOrder = $('d-order');
     if (p.status === 'HABIS') { tombolOrder.disabled = true; tombolOrder.textContent = 'Stok Habis'; }
     else { tombolOrder.disabled = false; tombolOrder.textContent = '🛒 Order Sekarang'; }
@@ -1024,9 +1024,19 @@ function bukaToko(){
   bukaLembar('lembar-toko');
 }
 $('d-toko').addEventListener('click', bukaToko);
-$('d-tanya').addEventListener('click', () => {
+$('d-tanya').addEventListener('click', async () => {
   if (!produkAktif) return;
-  const l = produkAktif.lapakDetail || {};
+  let l = produkAktif.lapakDetail || {};
+  // Data katalog tidak memuat nomor WA lapak (payload publik minimal) — ambil
+  // data lapak lengkap lebih dulu bila belum ada.
+  if (!l.noWa) {
+    toast('Menghubungi penjual…');
+    try {
+      const data = await api('detail', { idProduk: produkAktif.id });
+      if (data && data.lapak) { produkAktif.lapakDetail = data.lapak; l = data.lapak; }
+    } catch (e) { /* diperiksa di bawah */ }
+  }
+  if (!l.noWa) { toast('Nomor WhatsApp penjual belum tersedia.'); return; }
   const pesan = 'Halo ' + (l.nama || 'penjual') + ', saya mau tanya stok dari LapakKM.\n' +
     'Produk: ' + (produkAktif.nama || '') + '\n' +
     'Apakah stoknya masih tersedia? Terima kasih.';
