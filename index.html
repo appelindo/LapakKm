@@ -1509,12 +1509,25 @@ async function muatPesananSaya(){
       d.innerHTML =
         '<div class="nm">' + esc(o.namaProduk || '') + '</div>' +
         '<div class="info">Kode: ' + esc(idPesanan) + '<br>Pembeli: ' + esc(o.namaPembeli || o.nama || '–') + (o.tim ? ' · ' + esc(o.tim) : '') +
+        '<br>WA: ' + esc(o.noWa || '–') +
         (o.variasi ? '<br>Variasi: ' + esc(o.variasi) + (o.hargaSatuan ? ' · ' + rp(o.hargaSatuan) + ' / pcs' : '') : '') +
         '<br>Jumlah: ' + esc(o.jumlah == null ? '–' : o.jumlah) + ' · Total: <b>' + rp(o.total) + '</b> · ' + esc(LABEL_BAYAR[o.metode] || o.metode || '') +
         (o.catatan ? '<br>Catatan: ' + esc(o.catatan) : '') + '</div>' +
         '<span class="lencana-status ' + (o.status === 'SELESAI' ? 'selesai' : '') + '">' + esc(LABEL_STATUS[o.status] || o.status || '') + '</span>' +
-        (langkah ? '<div class="aksi"><button class="btn-kecil hijau">' + langkah.label + '</button></div>' : '');
-      const tombol = d.querySelector('.aksi button');
+        '<div class="aksi">' +
+        (o.noWa ? '<button class="btn-kecil" data-chat="1">💬 Chat Pembeli</button>' : '') +
+        (langkah ? '<button class="btn-kecil hijau" data-langkah="1">' + langkah.label + '</button>' : '') +
+        '</div>';
+      const tombolChat = d.querySelector('[data-chat]');
+      if (tombolChat) tombolChat.addEventListener('click', () => {
+        const namaLapakSaya = (profilCache && profilCache.lapak && profilCache.lapak.nama) || 'penjual LapakKM';
+        const pesan = 'Halo ' + (o.namaPembeli || 'kak') + ', saya dari ' + namaLapakSaya + ' (LapakKM).\n' +
+          'Pesanan ' + idPesanan + ': ' + (o.namaProduk || '') + (o.variasi ? ' (' + o.variasi + ')' : '') +
+          ' × ' + (o.jumlah == null ? 1 : o.jumlah) + ', total ' + rp(o.total) + '.\n' +
+          'Status saat ini: ' + (LABEL_STATUS[o.status] || o.status || '') + '.';
+        window.open(tautanWa(o.noWa, pesan), '_blank');
+      });
+      const tombol = d.querySelector('[data-langkah]');
       if (tombol) tombol.addEventListener('click', () => majuStatusPesanan(idPesanan, langkah.status, tombol));
       wadah.appendChild(d);
     });
