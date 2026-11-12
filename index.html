@@ -88,6 +88,7 @@
   .btn-kecil{min-height:44px;padding:0 14px;border-radius:6px;border:1px solid #ddd;background:#fff;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit}
   .btn-kecil.oranye{background:var(--oranye);border-color:var(--oranye);color:#fff}
   .btn-kecil.hijau{background:var(--hijau);border-color:var(--hijau);color:#fff}
+  .btn-kecil.wa{background:var(--wa);border-color:var(--wa);color:#fff}
   .btn-kecil.bahaya{color:#c62828;border-color:#ef9a9a}
   .btn-kecil:disabled{opacity:.45;cursor:default}
   .item{border:1px solid var(--garis);border-radius:8px;padding:10px;margin-bottom:10px;background:#fff}
@@ -398,7 +399,10 @@
     <div class="penjual-box">
       <div class="ava">🧑‍🍳</div>
       <div><b id="d-penjual"></b><span id="d-lokasi"></span></div>
-      <button class="btn-kecil oranye" id="d-toko" style="margin-left:auto">🏪 Kunjungi Toko</button>
+      <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px">
+        <button class="btn-kecil oranye" id="d-toko">🏪 Kunjungi Toko</button>
+        <button class="btn-kecil wa" id="d-tanya">💬 Tanya Stok</button>
+      </div>
     </div>
     <button class="tautan-lapor" id="d-lapor">🚩 Laporkan jualan ini</button>
   </div>
@@ -940,6 +944,7 @@ function isiDetail_(p, l){
     $('d-desk').textContent = p.deskripsi || 'Penjual belum menulis deskripsi.';
     $('d-penjual').textContent = l.nama || '';
     $('d-lokasi').textContent = [l.tim, l.ruangan].filter(Boolean).join(' · ');
+    $('d-tanya').style.display = l.noWa ? '' : 'none';
     const tombolOrder = $('d-order');
     if (p.status === 'HABIS') { tombolOrder.disabled = true; tombolOrder.textContent = 'Stok Habis'; }
     else { tombolOrder.disabled = false; tombolOrder.textContent = '🛒 Order Sekarang'; }
@@ -1019,6 +1024,14 @@ function bukaToko(){
   bukaLembar('lembar-toko');
 }
 $('d-toko').addEventListener('click', bukaToko);
+$('d-tanya').addEventListener('click', () => {
+  if (!produkAktif) return;
+  const l = produkAktif.lapakDetail || {};
+  const pesan = 'Halo ' + (l.nama || 'penjual') + ', saya mau tanya stok dari LapakKM.\n' +
+    'Produk: ' + (produkAktif.nama || '') + '\n' +
+    'Apakah stoknya masih tersedia? Terima kasih.';
+  window.open(tautanWa(l.noWa, pesan), '_blank');
+});
 $('d-bagikan').addEventListener('click', () => { if (produkAktif) bagikanProduk(produkAktif); });
 $('d-lapor').addEventListener('click', () => {
   if (!produkAktif) return;
