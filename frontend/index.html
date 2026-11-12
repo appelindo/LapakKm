@@ -441,41 +441,7 @@
       <p class="sub">Jualan yang kamu tayang di katalog LapakKM.</p>
       <div id="daftar-produk-saya"><p class="sub">Memuat…</p></div>
       <button class="btn-kecil oranye" id="pj-tambah-produk" style="width:100%">＋ Tambah Jualan</button>
-      <form class="form" id="form-produk" autocomplete="off" style="display:none;margin-top:14px">
-        <h3 id="pr-judul" style="margin-bottom:10px">Tambah Jualan</h3>
-        <input type="hidden" id="pr-id">
-        <div class="grup"><label>Foto Jualan</label>
-          <input type="file" id="pr-foto" accept="image/*">
-          <img class="pratinjau" id="pr-foto-img" alt="Pratinjau foto produk">
-        </div>
-        <div class="grup"><label>Nama Jualan *</label><input id="pr-nama" placeholder="cth. Kue Nastar Homemade 500 gram"></div>
-        <div class="grup"><label>Kategori</label>
-          <select id="pr-kategori">
-            <option>Makanan</option><option>Minuman</option><option>Preloved</option><option>Jasa</option><option>Lainnya</option>
-          </select>
-        </div>
-        <div class="grup"><label>Harga (Rp) *</label><input id="pr-harga" type="number" min="0" inputmode="numeric" placeholder="cth. 85000"></div>
-        <div class="grup"><label>Stok / Kuota</label><input id="pr-stok" type="number" min="0" inputmode="numeric" placeholder="cth. 20"></div>
-        <div class="grup"><label>Variasi <small>(opsional — harga boleh berbeda per variasi)</small></label>
-          <div id="pr-variasi"></div>
-          <button type="button" class="btn-kecil" id="pr-variasi-tambah">＋ Tambah Variasi</button>
-          <p class="petunjuk">Kosongkan bila jualanmu tidak punya variasi. Bila diisi, pembeli wajib memilih satu variasi dan harga mengikuti variasi yang dipilih. Stok tetap satu untuk semua variasi.</p>
-        </div>
-        <div class="grup"><label>Mode Jualan</label>
-          <select id="pr-mode"><option value="READY">Ready (langsung tersedia)</option><option value="PO">Pre-Order (PO)</option></select>
-        </div>
-        <div id="pr-grup-po" style="display:none">
-          <div class="grup"><label>PO Dibuka</label><input id="pr-buka" placeholder="cth. Senin pukul 08.00"></div>
-          <div class="grup"><label>PO Ditutup</label><input id="pr-tutup" placeholder="cth. Rabu pukul 15.00"></div>
-          <div class="grup"><label>Hari Pengambilan</label><input id="pr-ambil" placeholder="cth. Kamis, di pantry lantai 1"></div>
-        </div>
-        <div class="grup"><label>Deskripsi</label><textarea id="pr-desk" rows="3" placeholder="Ceritakan jualanmu: bahan, ukuran, cara ambil, dll."></textarea></div>
-        <div class="galat" id="pr-galat"></div>
-        <div style="display:flex;gap:8px">
-          <button type="button" class="btn-kecil" id="pr-batal" style="flex:0 0 110px">Batal</button>
-          <button type="submit" class="btn oranye" style="flex:1;width:auto">Simpan Jualan</button>
-        </div>
-      </form>
+
     </div>
 
     <div class="blok" id="pj-bungkus-pesanan" style="display:none">
@@ -539,6 +505,45 @@
 </div>
 
 <div class="latar-gelap" id="gelap"></div>
+
+<!-- ===== Lembar PRODUK (tambah / ubah jualan) ===== -->
+<div class="lembar" id="lembar-produk">
+      <form class="form" id="form-produk" autocomplete="off" style="padding:16px 16px 20px">
+        <h3 id="pr-judul" style="margin-bottom:10px">Tambah Jualan</h3>
+        <input type="hidden" id="pr-id">
+        <div class="grup"><label>Foto Jualan</label>
+          <input type="file" id="pr-foto" accept="image/*">
+          <img class="pratinjau" id="pr-foto-img" alt="Pratinjau foto produk">
+        </div>
+        <div class="grup"><label>Nama Jualan *</label><input id="pr-nama" placeholder="cth. Kue Nastar Homemade 500 gram"></div>
+        <div class="grup"><label>Kategori</label>
+          <select id="pr-kategori">
+            <option>Makanan</option><option>Minuman</option><option>Preloved</option><option>Jasa</option><option>Lainnya</option>
+          </select>
+        </div>
+        <div class="grup"><label>Harga (Rp) *</label><input id="pr-harga" type="number" min="0" inputmode="numeric" placeholder="cth. 85000"></div>
+        <div class="grup"><label>Stok / Kuota</label><input id="pr-stok" type="number" min="0" inputmode="numeric" placeholder="cth. 20"></div>
+        <div class="grup"><label>Variasi <small>(opsional — harga boleh berbeda per variasi)</small></label>
+          <div id="pr-variasi"></div>
+          <button type="button" class="btn-kecil" id="pr-variasi-tambah">＋ Tambah Variasi</button>
+          <p class="petunjuk">Kosongkan bila jualanmu tidak punya variasi. Bila diisi, pembeli wajib memilih satu variasi dan harga mengikuti variasi yang dipilih. Stok tetap satu untuk semua variasi.</p>
+        </div>
+        <div class="grup"><label>Mode Jualan</label>
+          <select id="pr-mode"><option value="READY">Ready (langsung tersedia)</option><option value="PO">Pre-Order (PO)</option></select>
+        </div>
+        <div id="pr-grup-po" style="display:none">
+          <div class="grup"><label>PO Dibuka</label><input id="pr-buka" placeholder="cth. Senin pukul 08.00"></div>
+          <div class="grup"><label>PO Ditutup</label><input id="pr-tutup" placeholder="cth. Rabu pukul 15.00"></div>
+          <div class="grup"><label>Hari Pengambilan</label><input id="pr-ambil" placeholder="cth. Kamis, di pantry lantai 1"></div>
+        </div>
+        <div class="grup"><label>Deskripsi</label><textarea id="pr-desk" rows="3" placeholder="Ceritakan jualanmu: bahan, ukuran, cara ambil, dll."></textarea></div>
+        <div class="galat" id="pr-galat"></div>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn-kecil" id="pr-batal" style="flex:0 0 110px">Batal</button>
+          <button type="submit" class="btn oranye" style="flex:1;width:auto">Simpan Jualan</button>
+        </div>
+      </form>
+</div>
 
 <!-- ===== Lembar DETAIL ===== -->
 <div class="lembar" id="lembar-detail">
@@ -1934,7 +1939,6 @@ $('nav-jual').addEventListener('click', e => {
     if (profilCache && profilCache.lapak) {
       aturSubPenjual('produk');
       bukaFormProduk(null);
-      $('form-produk').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 });
@@ -2314,7 +2318,7 @@ $('pr-variasi-tambah').addEventListener('click', () => tambahBarisVariasi());
 $('pr-mode').addEventListener('change', () => {
   $('pr-grup-po').style.display = $('pr-mode').value === 'PO' ? '' : 'none';
 });
-$('pr-batal').addEventListener('click', () => { $('form-produk').style.display = 'none'; });
+$('pr-batal').addEventListener('click', () => tutupLembar());
 function bukaFormProduk(p){
   fotoData = null;
   $('pr-foto').value = '';
@@ -2335,7 +2339,7 @@ function bukaFormProduk(p){
   if (p && p.fotoUrl) { img.src = p.fotoUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
   $('pr-grup-po').style.display = $('pr-mode').value === 'PO' ? '' : 'none';
   tampilGalat('pr-galat', '');
-  $('form-produk').style.display = '';
+  bukaLembar('lembar-produk');
 }
 $('form-produk').addEventListener('submit', async e => {
   e.preventDefault();
@@ -2361,7 +2365,7 @@ $('form-produk').addEventListener('submit', async e => {
   tombol.disabled = true; tombol.textContent = 'Menyimpan…';
   try {
     await api('simpanProduk', kirim);
-    $('form-produk').style.display = 'none';
+    tutupLembar();
     toast('Jualan tersimpan.');
     muatProdukSaya();
     muatKatalog();
