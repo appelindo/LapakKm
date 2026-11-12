@@ -164,6 +164,20 @@
   .baris-variasi .v-harga{flex:0 0 118px}
   .baris-variasi .v-hapus{flex:0 0 44px;min-height:44px;border-radius:6px;border:1px solid #ef9a9a;background:#fff;color:#c62828;font-size:15px;cursor:pointer}
   .petunjuk{font-size:11.5px;color:var(--teks2);line-height:1.5;margin-top:6px}
+  /* Keranjang */
+  .kartu .btn-keranjang{margin-top:6px;width:100%;height:40px;border:1.5px solid var(--oranye);border-radius:4px;background:#fff;color:var(--oranye);font-weight:700;font-size:12.5px;cursor:pointer}
+  .kartu .btn-keranjang:disabled{border-color:#bdbdbd;color:#bdbdbd;cursor:default}
+  nav a{position:relative}
+  .lencana-nav{position:absolute;top:1px;right:calc(50% - 21px);background:var(--oranye);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px}
+  .opsi-bayar2{display:flex;align-items:center;gap:10px;border:1.5px solid #e3e3e3;border-radius:8px;padding:11px 12px;cursor:pointer;font-size:14px;min-height:44px}
+  .opsi-bayar2 .ic{font-size:20px}
+  .opsi-bayar2 small{display:block;color:var(--teks2);font-size:11.5px}
+  .opsi-bayar2.terpilih{border-color:var(--oranye);background:var(--oranye-muda)}
+  .opsi-bayar2 .cek{margin-left:auto;color:var(--oranye);font-weight:800;visibility:hidden}
+  .opsi-bayar2.terpilih .cek{visibility:visible}
+  .stepper-kecil{display:flex;align-items:center;gap:12px}
+  .stepper-kecil button{width:36px;height:36px;border-radius:6px;border:1px solid #ddd;background:#fff;font-size:17px;cursor:pointer}
+  .item .v-hapus{margin-left:auto;background:#fff;border:1px solid #eee;border-radius:6px;width:34px;height:34px;cursor:pointer;font-size:14px;flex:0 0 auto}
   .grup input,.grup select,.grup textarea{width:100%;border:1px solid #ddd;border-radius:6px;padding:11px;font-size:14px;font-family:inherit;outline:none;background:#fff;min-height:44px}
   .grup input:focus,.grup select:focus,.grup textarea:focus{border-color:var(--oranye)}
   .grup .salah{border-color:#e53935!important;background:#fff7f7}
@@ -363,6 +377,7 @@
 
   <nav>
     <a href="#" class="aktif" id="nav-beranda"><span class="ic">🏠</span>Beranda</a>
+    <a href="#" id="nav-keranjang"><span class="ic">🛒</span>Keranjang<span class="lencana-nav" id="nav-keranjang-hitung">0</span></a>
     <a href="#" class="jual" id="nav-jual"><span class="ic">＋</span>Jual</a>
     <a href="#" id="nav-penjual"><span class="ic">👤</span><span id="nav-penjual-teks">Penjual</span></a>
     <a href="#" id="nav-admin" style="display:none"><span class="ic">🛡️</span>Admin</a>
@@ -388,7 +403,8 @@
     <button class="tautan-lapor" id="d-lapor">🚩 Laporkan jualan ini</button>
   </div>
   <div class="tombol-bawah">
-    <button class="btn polos" id="d-bagikan">🔗 Bagikan</button>
+    <button class="btn polos" id="d-bagikan" style="flex:0 0 54px">🔗</button>
+    <button class="btn polos" id="d-keranjang" style="flex:1">＋ Keranjang</button>
     <button class="btn oranye" id="d-order">🛒 Order Sekarang</button>
   </div>
 </div>
@@ -525,6 +541,98 @@
     </div>
   </div>
   <div class="tombol-bawah"><button class="btn oranye" id="lg-masuk">Masuk</button><button class="btn oranye" id="lg-daftar" style="display:none">Daftar &amp; Masuk</button></div>
+</div>
+
+<!-- ===== Lembar TAMBAH KE KERANJANG ===== -->
+<div class="lembar" id="lembar-tambah-keranjang">
+  <div class="pegangan"></div>
+  <div class="kepala"><b>Tambah ke Keranjang</b><button class="x" data-tutup>✕</button></div>
+  <div class="ringkas">
+    <div class="mini" id="tk-foto"></div>
+    <div><div class="nm" id="tk-nama"></div><div class="harga" id="tk-harga"></div></div>
+  </div>
+  <div class="form">
+    <div class="grup" id="tk-grup-variasi" style="display:none">
+      <label>Pilih Variasi *</label>
+      <div class="chip-variasi" id="tk-variasi"></div>
+    </div>
+    <div class="grup">
+      <label>Jumlah</label>
+      <div class="stepper">
+        <button type="button" id="tk-kurang">−</button><b id="tk-jumlah">1</b><button type="button" id="tk-tambah">+</button>
+        <div class="total">Subtotal: <b id="tk-total"></b></div>
+      </div>
+    </div>
+  </div>
+  <div class="tombol-bawah">
+    <button class="btn oranye" id="tk-masuk">＋ Masukkan ke Keranjang</button>
+  </div>
+</div>
+
+<!-- ===== Lembar KERANJANG ===== -->
+<div class="lembar" id="lembar-keranjang">
+  <div class="pegangan"></div>
+  <div class="kepala"><b>🛒 Keranjang Saya</b><button class="x" data-tutup>✕</button></div>
+  <div class="isi" id="kr-daftar"></div>
+  <div class="tombol-bawah">
+    <div style="flex:1;align-self:center">Total: <b id="kr-total">Rp0</b></div>
+    <button class="btn oranye" id="kr-checkout" style="flex:0 0 150px">Checkout</button>
+  </div>
+</div>
+
+<!-- ===== Lembar CHECKOUT KERANJANG ===== -->
+<div class="lembar" id="lembar-checkout">
+  <div class="pegangan"></div>
+  <div class="kepala"><b>Checkout Keranjang</b><button class="x" data-tutup>✕</button></div>
+  <div class="isi">
+    <div class="kotak" id="co-ringkasan" style="margin:0"></div>
+  </div>
+  <div class="form">
+    <div class="grup">
+      <label>Nama kamu *</label>
+      <input id="co-pembeli" placeholder="cth. Dewi Lestari">
+      <div class="catatan-salah" id="s-co-pembeli">Nama wajib diisi.</div>
+    </div>
+    <div class="grup">
+      <label>Nomor WhatsApp *</label>
+      <input id="co-wa" inputmode="tel" placeholder="cth. 0812xxxxxxx">
+      <div class="catatan-salah" id="s-co-wa">Nomor WhatsApp wajib diisi supaya penjual bisa mengonfirmasi.</div>
+    </div>
+    <div class="grup">
+      <label>Tim / Unit</label>
+      <input id="co-tim" placeholder="cth. Tim MPPP">
+    </div>
+    <div class="grup">
+      <label>Catatan <small>(opsional)</small></label>
+      <textarea id="co-catatan" rows="2" placeholder="cth. diambil jam 12 di lobi"></textarea>
+    </div>
+    <div class="grup">
+      <label>Pembayaran <small>(berlaku untuk semua pesanan)</small></label>
+      <div class="bayar">
+        <div class="opsi-bayar2 terpilih" data-bayar="TUNAI"><span class="ic">💵</span><div>Tunai saat ambil barang<small>Bayar langsung ke penjual saat pengambilan</small></div><span class="cek">✓</span></div>
+        <div class="opsi-bayar2" data-bayar="TRANSFER"><span class="ic">🏦</span><div>Transfer bank<small>Nomor rekening tiap penjual muncul sesudah checkout terkirim</small></div><span class="cek">✓</span></div>
+        <div class="opsi-bayar2" data-bayar="QRIS"><span class="ic">📱</span><div>QRIS<small>Kode QRIS tiap penjual muncul sesudah checkout terkirim</small></div><span class="cek">✓</span></div>
+      </div>
+    </div>
+    <div class="galat" id="co-galat"></div>
+  </div>
+  <div class="tombol-bawah">
+    <button class="btn oranye" id="co-kirim">Kirim Semua Pesanan</button>
+  </div>
+</div>
+
+<!-- ===== Lembar KONFIRMASI KERANJANG ===== -->
+<div class="lembar" id="lembar-konfirmasi-keranjang">
+  <div class="sukses">
+    <div class="centang">✓</div>
+    <b>Checkout Terkirim!</b>
+    <p>Pesananmu sudah masuk ke penjual dan <b>menunggu konfirmasi</b>.<br>Kode grup checkout ini:</p>
+    <div class="kode" id="kk-grup">—</div>
+  </div>
+  <div id="kk-isi"></div>
+  <div class="tombol-bawah">
+    <button class="btn oranye" data-tutup>Selesai</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -753,7 +861,8 @@ function kartuHtml(p, kecil){
     '<div class="isi"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' +
     '<div class="penjual">🧑 ' + esc(namaLapak) + '</div>' +
     '<div class="meta"><span>' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + '</span><span>Stok ' + esc(p.stok == null ? '–' : p.stok) + '</span></div>' +
-    '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '🛒 Order') + '</button></div>';
+    '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '🛒 Order') + '</button>' +
+    '<button class="btn-keranjang" ' + (habis ? 'disabled' : '') + '>＋ Keranjang</button></div>';
 }
 function renderKatalog(){
   const hasil = semuaProduk.filter(cocokFilter);
@@ -786,6 +895,8 @@ function renderKatalog(){
       d.innerHTML = kartuHtml(p, false);
       const tombol = d.querySelector('.btn-order');
       if (tombol) tombol.addEventListener('click', e => { e.stopPropagation(); bukaOrder(p); });
+      const tombolK = d.querySelector('.btn-keranjang');
+      if (tombolK) tombolK.addEventListener('click', e => { e.stopPropagation(); bukaTambahKeranjang(p); });
       d.addEventListener('click', () => bukaDetail(p.id));
       grid.appendChild(d);
     });
@@ -894,6 +1005,8 @@ function bukaToko(){
     d.innerHTML = kartuHtml(p, false);
     const tombol = d.querySelector('.btn-order');
     if (tombol) tombol.addEventListener('click', e => { e.stopPropagation(); bukaOrder(p); });
+    const tombolK = d.querySelector('.btn-keranjang');
+    if (tombolK) tombolK.addEventListener('click', e => { e.stopPropagation(); bukaTambahKeranjang(p); });
     d.addEventListener('click', () => bukaDetail(p.id));
     wadah.appendChild(d);
   });
@@ -1077,6 +1190,270 @@ function tampilKonfirmasi(data, ktx){
   $('k-chat').onclick = () => { window.open(tautanWa(lapak.noWa, pesan), '_blank'); };
   bukaLembar('lembar-konfirmasi');
 }
+
+/* ================= Keranjang belanja =================
+   Isi keranjang tersimpan di peramban pembeli (localStorage), jadi tetap ada
+   sesudah halaman ditutup. Harga & stok selalu diperiksa ulang server saat
+   checkout; satu checkout boleh lintas lapak dan diikat kode grup. */
+const KUNCI_KERANJANG = 'lapakkmKeranjang';
+let keranjang = [];
+try {
+  keranjang = JSON.parse(localStorage.getItem(KUNCI_KERANJANG) || '[]');
+  if (!Array.isArray(keranjang)) keranjang = [];
+} catch (e) { keranjang = []; }
+
+function simpanKeranjang(){
+  try { localStorage.setItem(KUNCI_KERANJANG, JSON.stringify(keranjang)); } catch (e) {}
+  segarkanLencanaKeranjang();
+}
+function segarkanLencanaKeranjang(){
+  const n = keranjang.reduce((a, i) => a + (Number(i.jumlah) || 0), 0);
+  const el = $('nav-keranjang-hitung');
+  if (el) { el.textContent = n; el.style.display = n > 0 ? 'flex' : 'none'; }
+}
+function kunciItemKeranjang(idProduk, variasi){ return String(idProduk) + '|' + (variasi || ''); }
+function grupKeranjang(){
+  const g = {};
+  keranjang.forEach(i => {
+    const k = i.idLapak || '?';
+    if (!g[k]) g[k] = { namaLapak: i.namaLapak || 'Penjual', items: [] };
+    g[k].items.push(i);
+  });
+  return g;
+}
+
+/* ----- Tambah ke keranjang ----- */
+let tambahKtx = null;
+function bukaTambahKeranjang(p){
+  if (!p || p.status === 'HABIS') { toast('Maaf, stok jualan ini sedang habis.'); return; }
+  tambahKtx = { produk: p, jumlah: 1, variasi: '', hargaSatuan: Number(p.harga) || 0 };
+  const wadahFoto = $('tk-foto');
+  wadahFoto.className = 'mini ' + kelasWarna(p.nama);
+  wadahFoto.innerHTML = fotoHtml(p.fotoUrl, p.nama);
+  $('tk-nama').textContent = p.nama || '';
+  const daftarVar = variasiProduk(p);
+  const grupVar = $('tk-grup-variasi'), wadahVar = $('tk-variasi');
+  wadahVar.innerHTML = '';
+  if (daftarVar.length) {
+    grupVar.style.display = '';
+    daftarVar.forEach(v => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = esc(v.nama) + '<b>' + rp(v.harga) + '</b>';
+      b.addEventListener('click', () => pilihVariasiTambah(v, b));
+      wadahVar.appendChild(b);
+    });
+    pilihVariasiTambah(daftarVar[0], wadahVar.children[0]);
+  } else {
+    grupVar.style.display = 'none';
+    $('tk-harga').textContent = rp(p.harga) + ' / pcs';
+  }
+  segarkanTotalTambah();
+  bukaLembar('lembar-tambah-keranjang');
+}
+function pilihVariasiTambah(v, tombol){
+  if (!tambahKtx) return;
+  tambahKtx.variasi = v.nama;
+  tambahKtx.hargaSatuan = Number(v.harga) || 0;
+  document.querySelectorAll('#tk-variasi button').forEach(b => b.classList.toggle('terpilih', b === tombol));
+  $('tk-harga').textContent = rp(tambahKtx.hargaSatuan) + ' / pcs';
+  segarkanTotalTambah();
+}
+function segarkanTotalTambah(){
+  if (!tambahKtx) return;
+  $('tk-jumlah').textContent = tambahKtx.jumlah;
+  $('tk-total').textContent = rp((Number(tambahKtx.hargaSatuan) || 0) * tambahKtx.jumlah);
+}
+$('tk-kurang').addEventListener('click', () => { if (tambahKtx && tambahKtx.jumlah > 1) { tambahKtx.jumlah--; segarkanTotalTambah(); } });
+$('tk-tambah').addEventListener('click', () => { if (tambahKtx) { tambahKtx.jumlah++; segarkanTotalTambah(); } });
+$('tk-masuk').addEventListener('click', () => {
+  if (!tambahKtx) return;
+  const p = tambahKtx.produk;
+  const kunci = kunciItemKeranjang(p.id, tambahKtx.variasi);
+  const ada = keranjang.find(i => kunciItemKeranjang(i.idProduk, i.variasi) === kunci);
+  if (ada) {
+    ada.jumlah += tambahKtx.jumlah;
+    ada.hargaSatuan = tambahKtx.hargaSatuan;
+    ada.nama = p.nama;
+    ada.fotoUrl = p.fotoUrl || '';
+  } else {
+    keranjang.push({
+      idProduk: p.id, nama: p.nama, fotoUrl: p.fotoUrl || '',
+      variasi: tambahKtx.variasi, hargaSatuan: tambahKtx.hargaSatuan,
+      jumlah: tambahKtx.jumlah,
+      idLapak: (p.lapak && p.lapak.id) || '', namaLapak: (p.lapak && p.lapak.nama) || ''
+    });
+  }
+  simpanKeranjang();
+  tutupLembar();
+  toast('Masuk keranjang: ' + p.nama + (tambahKtx.variasi ? ' (' + tambahKtx.variasi + ')' : '') + ' ×' + tambahKtx.jumlah);
+});
+$('d-keranjang').addEventListener('click', () => { if (produkAktif) bukaTambahKeranjang(produkAktif); });
+
+/* ----- Isi keranjang ----- */
+$('nav-keranjang').addEventListener('click', e => { e.preventDefault(); renderKeranjang(); bukaLembar('lembar-keranjang'); });
+function renderKeranjang(){
+  const wadah = $('kr-daftar');
+  wadah.innerHTML = '';
+  if (!keranjang.length) {
+    wadah.innerHTML = '<p class="sub">Keranjangmu masih kosong. Jelajahi katalog, lalu tekan ＋ Keranjang pada jualan yang kamu suka.</p>';
+    $('kr-total').textContent = rp(0);
+    $('kr-checkout').disabled = true;
+    return;
+  }
+  $('kr-checkout').disabled = false;
+  const grup = grupKeranjang();
+  Object.keys(grup).forEach(k => {
+    const h = document.createElement('div');
+    h.className = 'sub';
+    h.style.cssText = 'font-weight:700;margin:12px 0 6px';
+    h.textContent = '🏪 ' + grup[k].namaLapak;
+    wadah.appendChild(h);
+    grup[k].items.forEach(item => wadah.appendChild(barisItemKeranjang(item)));
+  });
+  $('kr-total').textContent = rp(keranjang.reduce((a, i) => a + (Number(i.hargaSatuan) || 0) * (Number(i.jumlah) || 0), 0));
+}
+function barisItemKeranjang(item){
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML =
+    '<div class="atas"><div class="mini ' + kelasWarna(item.nama) + '">' + fotoHtml(item.fotoUrl, item.nama) + '</div>' +
+    '<div style="flex:1"><div class="nm">' + esc(item.nama) + '</div>' +
+    '<div class="info">' + (item.variasi ? 'Variasi: ' + esc(item.variasi) + ' · ' : '') + rp(item.hargaSatuan) + ' / pcs</div></div>' +
+    '<button class="v-hapus" data-hapus="1" title="Hapus dari keranjang">🗑</button></div>' +
+    '<div class="aksi" style="align-items:center"><div class="stepper-kecil"><button data-kurang="1">−</button><b>' + item.jumlah + '</b><button data-tambah="1">+</button></div>' +
+    '<span style="margin-left:auto;font-weight:700">' + rp((Number(item.hargaSatuan) || 0) * (Number(item.jumlah) || 0)) + '</span></div>';
+  d.querySelector('[data-hapus]').addEventListener('click', () => {
+    keranjang = keranjang.filter(i => i !== item);
+    simpanKeranjang(); renderKeranjang();
+  });
+  d.querySelector('[data-kurang]').addEventListener('click', () => {
+    if (item.jumlah > 1) item.jumlah--;
+    else keranjang = keranjang.filter(i => i !== item);
+    simpanKeranjang(); renderKeranjang();
+  });
+  d.querySelector('[data-tambah]').addEventListener('click', () => {
+    item.jumlah++;
+    simpanKeranjang(); renderKeranjang();
+  });
+  return d;
+}
+
+/* ----- Checkout keranjang ----- */
+let checkoutKtx = null;
+$('kr-checkout').addEventListener('click', () => {
+  if (!keranjang.length) return;
+  checkoutKtx = { metode: 'TUNAI' };
+  document.querySelectorAll('.opsi-bayar2').forEach(x => x.classList.toggle('terpilih', x.dataset.bayar === 'TUNAI'));
+  renderRingkasanCheckout();
+  sembunyikanGalat('co-galat');
+  bukaLembar('lembar-checkout');
+});
+function renderRingkasanCheckout(){
+  const grup = grupKeranjang();
+  let html = '';
+  Object.keys(grup).forEach(k => {
+    html += '<div class="baris"><span style="font-weight:700">🏪 ' + esc(grup[k].namaLapak) + '</span><b></b></div>';
+    grup[k].items.forEach(i => {
+      html += '<div class="baris"><span>' + esc(i.nama) + (i.variasi ? ' (' + esc(i.variasi) + ')' : '') + ' × ' + i.jumlah + '</span><b>' + rp((Number(i.hargaSatuan) || 0) * (Number(i.jumlah) || 0)) + '</b></div>';
+    });
+  });
+  const total = keranjang.reduce((a, i) => a + (Number(i.hargaSatuan) || 0) * (Number(i.jumlah) || 0), 0);
+  html += '<div class="baris total"><span>Total semua</span><b>' + rp(total) + '</b></div>';
+  $('co-ringkasan').innerHTML = html;
+}
+document.querySelectorAll('.opsi-bayar2').forEach(o => o.addEventListener('click', () => {
+  if (!checkoutKtx) return;
+  checkoutKtx.metode = o.dataset.bayar;
+  document.querySelectorAll('.opsi-bayar2').forEach(x => x.classList.toggle('terpilih', x === o));
+}));
+$('co-kirim').addEventListener('click', async () => {
+  if (!checkoutKtx || !keranjang.length) return;
+  const nama = $('co-pembeli').value.trim();
+  const noWa = $('co-wa').value.trim();
+  $('s-co-pembeli').style.display = nama ? 'none' : 'block';
+  $('s-co-wa').style.display = noWa ? 'none' : 'block';
+  if (!nama || !noWa) { toast('Nama dan nomor WhatsApp wajib diisi.'); return; }
+  sembunyikanGalat('co-galat');
+  const grupKode = 'GRP-' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
+  const tombolKirim = $('co-kirim');
+  tombolKirim.disabled = true;
+  tombolKirim.textContent = 'Mengirim pesanan…';
+  const hasil = {};
+  const gagalItem = [];
+  const salinan = [...keranjang];
+  for (const item of salinan) {
+    try {
+      const data = await api('order', {
+        idProduk: item.idProduk, nama, noWa,
+        tim: $('co-tim').value.trim(),
+        jumlah: item.jumlah, metode: checkoutKtx.metode,
+        variasi: item.variasi || '', catatan: $('co-catatan').value.trim(),
+        grup: grupKode
+      });
+      const k = item.idLapak || '?';
+      if (!hasil[k]) hasil[k] = { lapak: data.lapak || {}, namaLapak: item.namaLapak || (data.lapak && data.lapak.nama) || 'Penjual', pesanan: [], total: 0 };
+      hasil[k].pesanan.push({ kode: data.idPesanan, nama: item.nama, variasi: item.variasi, jumlah: item.jumlah, total: data.total });
+      hasil[k].total += Number(data.total) || 0;
+      keranjang = keranjang.filter(i => i !== item);
+    } catch (e) {
+      gagalItem.push({ item, pesan: e.message });
+    }
+  }
+  simpanKeranjang();
+  tombolKirim.disabled = false;
+  tombolKirim.textContent = 'Kirim Semua Pesanan';
+  if (!Object.keys(hasil).length) {
+    tampilGalat('co-galat', 'Semua pesanan gagal terkirim' + (gagalItem.length ? ': ' + gagalItem[0].pesan : '.'));
+    return;
+  }
+  tampilKonfirmasiKeranjang(hasil, grupKode, checkoutKtx.metode, gagalItem);
+});
+function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
+  $('kk-grup').textContent = grupKode;
+  const wadah = $('kk-isi');
+  let html = '';
+  Object.keys(hasil).forEach(k => {
+    const g = hasil[k];
+    const lapak = g.lapak || {};
+    html += '<div class="kotak"><div class="baris"><span style="font-weight:700">🏪 ' + esc(g.namaLapak) + '</span><b>' + rp(g.total) + '</b></div>';
+    g.pesanan.forEach(ps => {
+      html += '<div class="baris"><span>' + esc(ps.nama) + (ps.variasi ? ' (' + esc(ps.variasi) + ')' : '') + ' × ' + ps.jumlah + '</span><b>' + esc(ps.kode) + '</b></div>';
+    });
+    html += '</div>';
+    if (metode === 'TRANSFER') {
+      html += '<div class="kotak"><h4>🏦 Transfer ke ' + esc(g.namaLapak) + '</h4><p>Transfer sebesar <b>' + rp(g.total) + '</b> ke rekening berikut sesudah penjual mengonfirmasi pesananmu:</p><div class="rek">' + esc(lapak.noRekening || '—') + '</div><button class="btn-salin" data-salin="' + esc(lapak.noRekening || '') + '">Salin Nomor Rekening</button></div>';
+    } else if (metode === 'QRIS') {
+      html += lapak.qrisUrl
+        ? '<div class="kotak"><h4>📱 QRIS ' + esc(g.namaLapak) + '</h4><div class="qris-tampil"><img src="' + esc(lapak.qrisUrl) + '" alt="QRIS penjual"><span>Scan kode di atas dengan nominal <b>' + rp(g.total) + '</b> sesudah penjual mengonfirmasi pesananmu.</span></div></div>'
+        : '<div class="kotak"><h4>📱 QRIS ' + esc(g.namaLapak) + '</h4><p>Penjual belum mengunggah gambar QRIS — chat penjualnya untuk meminta kode QRIS.</p></div>';
+    } else {
+      html += '<div class="kotak"><h4>💵 Tunai — ' + esc(g.namaLapak) + '</h4><p>Bayar <b>' + rp(g.total) + '</b> langsung ke penjual saat pengambilan, sesudah pesananmu dikonfirmasi.</p></div>';
+    }
+    html += '<div style="padding:10px 16px 0"><button class="btn wa kk-chat" data-lapak="' + esc(k) + '" style="width:100%">💬 Chat ' + esc(g.namaLapak) + '</button></div>';
+  });
+  if (gagalItem.length) {
+    html += '<div class="kotak" style="border-color:#ef9a9a"><h4>⚠️ Sebagian pesanan gagal terkirim</h4>' +
+      gagalItem.map(g => '<p>' + esc(g.item.nama) + ': ' + esc(g.pesan) + '</p>').join('') +
+      '<p>Barang yang gagal tetap tersimpan di keranjangmu — coba lagi sesudah stok tersedia.</p></div>';
+  }
+  wadah.innerHTML = html;
+  wadah.querySelectorAll('[data-salin]').forEach(b => b.addEventListener('click', async () => {
+    const ok = await salinTeks(b.dataset.salin || '');
+    b.textContent = ok ? '✓ Tersalin' : 'Gagal menyalin — catat manual ya';
+  }));
+  wadah.querySelectorAll('.kk-chat').forEach(b => b.addEventListener('click', () => {
+    const g = hasil[b.dataset.lapak];
+    if (!g) return;
+    const lapak = g.lapak || {};
+    let pesan = 'Halo ' + (lapak.nama || g.namaLapak) + ', saya baru checkout lewat LapakKM.\nGrup checkout: ' + grupKode + '\n';
+    g.pesanan.forEach(ps => { pesan += '- ' + ps.nama + (ps.variasi ? ' (' + ps.variasi + ')' : '') + ' × ' + ps.jumlah + ' (' + ps.kode + ')\n'; });
+    pesan += 'Total: ' + rp(g.total) + '\nPembayaran: ' + (LABEL_BAYAR[metode] || metode) + '\nMohon konfirmasinya, terima kasih.';
+    window.open(tautanWa(lapak.noWa, pesan), '_blank');
+  }));
+  bukaLembar('lembar-konfirmasi-keranjang');
+}
+segarkanLencanaKeranjang();
 
 /* ================= Navigasi tampilan ================= */
 function tampilView(nama){
@@ -1516,7 +1893,7 @@ async function muatPesananSaya(){
       d.className = 'item';
       d.innerHTML =
         '<div class="nm">' + esc(o.namaProduk || '') + '</div>' +
-        '<div class="info">Kode: ' + esc(idPesanan) + '<br>Pembeli: ' + esc(o.namaPembeli || o.nama || '–') + (o.tim ? ' · ' + esc(o.tim) : '') +
+        '<div class="info">Kode: ' + esc(idPesanan) + (o.grup ? ' · Grup ' + esc(o.grup) : '') + '<br>Pembeli: ' + esc(o.namaPembeli || o.nama || '–') + (o.tim ? ' · ' + esc(o.tim) : '') +
         '<br>WA: ' + esc(waIndo(o.noWa) || '–') +
         (o.variasi ? '<br>Variasi: ' + esc(o.variasi) + (o.hargaSatuan ? ' · ' + rp(o.hargaSatuan) + ' / pcs' : '') : '') +
         '<br>Jumlah: ' + esc(o.jumlah == null ? '–' : o.jumlah) + ' · Total: <b>' + rp(o.total) + '</b> · ' + esc(LABEL_BAYAR[o.metode] || o.metode || '') +
