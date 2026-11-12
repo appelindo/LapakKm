@@ -286,9 +286,20 @@
 
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;border-radius:22px;font-size:13px;z-index:70;opacity:0;transition:.25s;pointer-events:none;max-width:88vw;text-align:center;line-height:1.45}
   .toast.tampil{opacity:1}
+  /* Layar sambut (bumper) saat aplikasi dibuka */
+  #layar-sambut{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,var(--oranye),var(--oranye2));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease;animation:sambutHilang .5s ease 3s forwards}
+  #layar-sambut.hilang{opacity:0;pointer-events:none}
+  #layar-sambut .sambut-logo{width:118px;height:118px;border-radius:26px;background:#fff;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,.28);animation:sambutMasuk .55s ease both}
+  #layar-sambut .sambut-slogan{color:#fff;font-size:19px;font-weight:700;text-align:center;line-height:1.5;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.18);animation:sambutMasuk .55s ease .12s both}
+  @keyframes sambutMasuk{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+  @keyframes sambutHilang{to{opacity:0;visibility:hidden}}
 </style>
 </head>
 <body>
+<div id="layar-sambut" aria-hidden="true">
+  <img class="sambut-logo" alt="Logo LapakKM">
+  <div class="sambut-slogan">Belanja Aman<br>Belanja Nyaman</div>
+</div>
 <div class="hp">
 
   <!-- ======== TAMPILAN BERANDA ======== -->
@@ -2672,6 +2683,14 @@ $('ps-cari-btn').addEventListener('click', async () => {
 /* ================= Awal ================= */
 bangunKategori();
 segarkanUiSesi();
+(function layarSambut(){
+  const s = $('layar-sambut');
+  if (!s) return;
+  const logo = document.querySelector('.nama-toko .logo');
+  const img = s.querySelector('.sambut-logo');
+  if (logo && img && logo.src) img.src = logo.src;
+  setTimeout(() => { s.classList.add('hilang'); setTimeout(() => s.remove(), 550); }, 1500);
+})();
 (function pulihkanView(){
   // Refresh halaman mengembalikan tampilan terakhir (Lapak Saya / Admin),
   // selama sesi masih masuk — bukan selalu balik ke beranda.
