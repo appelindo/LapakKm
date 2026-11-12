@@ -1095,6 +1095,7 @@ function bukaOrder(p){
   tampilGalat('o-galat', '');
   document.querySelectorAll('.opsi-bayar').forEach(o => o.classList.toggle('terpilih', o.dataset.bayar === 'TUNAI'));
   segarkanTotal();
+  isiOtomatisPembeli($('o-pembeli'), $('o-wa'), $('o-tim'));
   bukaLembar('lembar-order');
 }
 function pilihVariasi(v, tombol){
@@ -1142,6 +1143,7 @@ $('o-kirim').addEventListener('click', async () => {
       variasi: orderKtx.variasi || '',
       catatan: $('o-catatan').value.trim()
     });
+    simpanDataPembeli({ nama: namaEl.value.trim(), noWa: waEl.value.trim(), tim: $('o-tim').value.trim() });
     tampilKonfirmasi(data, orderKtx);
   } catch (e) {
     tampilGalat('o-galat', e.message);
@@ -1339,6 +1341,52 @@ function barisItemKeranjang(item){
   return d;
 }
 
+/* ----- Isi otomatis data pembeli -----
+   Bila pembeli sedang masuk (punya akun), nama/WA/tim diambil dari profil
+   akunnya; bila tidak, dipakai isian terakhir yang tersimpan di perangkat
+   ini. Data disimpan lagi setiap ada pesanan yang berhasil terkirim. */
+const KUNCI_PEMBELI = 'lapakkmPembeli';
+function dataPembeliTersimpan(){
+  try { return JSON.parse(localStorage.getItem(KUNCI_PEMBELI) || 'null'); } catch (e) { return null; }
+}
+function simpanDataPembeli(d){
+  try { localStorage.setItem(KUNCI_PEMBELI, JSON.stringify(d)); } catch (e) {}
+}
+function waTampil(v){
+  // Nomor di basis data bisa kehilangan angka 0 depan (tersimpan sebagai
+  // angka) — tampilkan kembali dalam format lokal 08xxx.
+  const s = String(v || '').replace(/[\s-]/g, '');
+  return (s && s.charAt(0) === '8') ? '0' + s : s;
+}
+async function isiOtomatisPembeli(elNama, elWa, elTim){
+  if (sesi) {
+    let pg = (profilCache && profilCache.pengguna) || null;
+    let lapak = (profilCache && profilCache.lapak) || null;
+    if (!pg) {
+      try {
+        const data = await api('profilSaya', { token: sesi.token });
+        profilCache = data;
+        pg = data.pengguna || null;
+        lapak = data.lapak || null;
+      } catch (e) {}
+    }
+    if (pg) {
+      if (pg.nama) elNama.value = pg.nama;
+      const wa = waTampil(pg.noWa || (lapak && lapak.noWa) || '');
+      if (wa) elWa.value = wa;
+      const tim = pg.tim || (lapak && lapak.tim) || '';
+      if (tim) elTim.value = tim;
+      return;
+    }
+  }
+  const t = dataPembeliTersimpan();
+  if (t) {
+    if (!elNama.value && t.nama) elNama.value = t.nama;
+    if (!elWa.value && t.noWa) elWa.value = waTampil(t.noWa);
+    if (!elTim.value && t.tim) elTim.value = t.tim;
+  }
+}
+
 /* ----- Checkout keranjang ----- */
 let checkoutKtx = null;
 $('kr-checkout').addEventListener('click', () => {
@@ -1347,6 +1395,7 @@ $('kr-checkout').addEventListener('click', () => {
   document.querySelectorAll('.opsi-bayar2').forEach(x => x.classList.toggle('terpilih', x.dataset.bayar === 'TUNAI'));
   renderRingkasanCheckout();
   tampilGalat('co-galat', '');
+  isiOtomatisPembeli($('co-pembeli'), $('co-wa'), $('co-tim'));
   bukaLembar('lembar-checkout');
 });
 function renderRingkasanCheckout(){
@@ -1407,6 +1456,7 @@ $('co-kirim').addEventListener('click', async () => {
     tampilGalat('co-galat', 'Semua pesanan gagal terkirim' + (gagalItem.length ? ': ' + gagalItem[0].pesan : '.'));
     return;
   }
+  simpanDataPembeli({ nama, noWa, tim: $('co-tim').value.trim() });
   tampilKonfirmasiKeranjang(hasil, grupKode, checkoutKtx.metode, gagalItem);
 });
 function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
