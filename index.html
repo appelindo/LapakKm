@@ -725,6 +725,14 @@ function cocokFilter(p){
   }
   return true;
 }
+/* Nomor WA tersimpan di sheet bisa kehilangan angka 0 depannya (sel dibaca
+   sebagai angka). Fungsi ini mengembalikan bentuk tampil Indonesia: 08…. */
+function waIndo(no){
+  let s = String(no == null ? '' : no).replace(/[\s-]/g, '');
+  if (s.startsWith('62')) s = '0' + s.slice(2);
+  else if (s.startsWith('8')) s = '0' + s;
+  return s;
+}
 function variasiProduk(p){ return (p && Array.isArray(p.variasi)) ? p.variasi : []; }
 function hargaTampil(p){
   const v = variasiProduk(p);
@@ -1252,7 +1260,7 @@ async function muatProfil(sesudah){
       ringkas.style.display = '';
       ringkas.innerHTML =
         '<div class="item"><div class="nm">' + esc(lapak.namaLapak || '') + '</div>' +
-        '<div class="info">WhatsApp: ' + esc(lapak.noWa || '–') + '<br>Tim: ' + esc(lapak.tim || '–') + ' · Ruangan: ' + esc(lapak.ruangan || '–') + '<br>Rekening: ' + esc(lapak.noRekening || '–') + '</div>' +
+        '<div class="info">WhatsApp: ' + esc(waIndo(lapak.noWa) || '–') + '<br>Tim: ' + esc(lapak.tim || '–') + ' · Ruangan: ' + esc(lapak.ruangan || '–') + '<br>Rekening: ' + esc(lapak.noRekening || '–') + '</div>' +
         (lapak.qrisUrl ? '<img class="pratinjau" style="display:block" src="' + esc(lapak.qrisUrl) + '" alt="QRIS lapak">' : '<div class="info">QRIS belum diunggah.</div>') +
         '<div class="aksi"><button type="button" class="btn-kecil" id="pj-ubah-profil">Ubah Profil</button></div></div>';
       $('pj-ubah-profil').addEventListener('click', () => {
@@ -1277,13 +1285,13 @@ function isiFormLapak(lapak, pg){
   const img = $('l-qris-img');
   if (lapak) {
     $('l-nama').value = lapak.namaLapak || '';
-    $('l-wa').value = lapak.noWa || '';
+    $('l-wa').value = waIndo(lapak.noWa);
     $('l-tim').value = lapak.tim || '';
     $('l-ruang').value = lapak.ruangan || '';
     $('l-rek').value = lapak.noRekening || '';
     if (lapak.qrisUrl) { img.src = lapak.qrisUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
   } else {
-    $('l-nama').value = ''; $('l-wa').value = (pg && pg.noWa) || '';
+    $('l-nama').value = ''; $('l-wa').value = waIndo(pg && pg.noWa);
     $('l-tim').value = (pg && pg.tim) || ''; $('l-ruang').value = ''; $('l-rek').value = '';
     img.style.display = 'none';
   }
@@ -1509,7 +1517,7 @@ async function muatPesananSaya(){
       d.innerHTML =
         '<div class="nm">' + esc(o.namaProduk || '') + '</div>' +
         '<div class="info">Kode: ' + esc(idPesanan) + '<br>Pembeli: ' + esc(o.namaPembeli || o.nama || '–') + (o.tim ? ' · ' + esc(o.tim) : '') +
-        '<br>WA: ' + esc(o.noWa || '–') +
+        '<br>WA: ' + esc(waIndo(o.noWa) || '–') +
         (o.variasi ? '<br>Variasi: ' + esc(o.variasi) + (o.hargaSatuan ? ' · ' + rp(o.hargaSatuan) + ' / pcs' : '') : '') +
         '<br>Jumlah: ' + esc(o.jumlah == null ? '–' : o.jumlah) + ' · Total: <b>' + rp(o.total) + '</b> · ' + esc(LABEL_BAYAR[o.metode] || o.metode || '') +
         (o.catatan ? '<br>Catatan: ' + esc(o.catatan) : '') + '</div>' +
@@ -1616,7 +1624,7 @@ function renderAdminPengguna(){
     d.innerHTML =
       '<div class="nm">' + esc(u.nama || '') + '</div>' +
       '<div class="info">NIP: ' + esc(u.nip || '') + ' · ' + esc(u.peran || '') + (u.tim ? ' · ' + esc(u.tim) : '') +
-      '<br>WhatsApp: ' + esc(u.noWa || '–') + (u.email ? ' · ' + esc(u.email) : '') + '</div>' +
+      '<br>WhatsApp: ' + esc(waIndo(u.noWa) || '–') + (u.email ? ' · ' + esc(u.email) : '') + '</div>' +
       '<span class="lencana-status ' + (nonaktif ? 'arsip' : '') + '">' + esc(nonaktif ? 'NONAKTIF' : 'AKTIF') + '</span>' +
       '<div class="aksi"><button class="btn-kecil oranye" data-aksi="UBAH">Ubah</button>' +
       '<button class="btn-kecil ' + (nonaktif ? '' : 'bahaya') + '" data-aksi="STATUS">' + (nonaktif ? 'Aktifkan' : 'Nonaktifkan') + '</button></div>';
@@ -1638,7 +1646,7 @@ function isiFormPengguna(u){
   $('pg-nip').value = u ? (u.nip || '') : '';
   $('pg-nama').value = u ? (u.nama || '') : '';
   $('pg-tim').value = u ? (u.tim || '') : '';
-  $('pg-wa').value = u ? (u.noWa || '') : '';
+  $('pg-wa').value = u ? waIndo(u.noWa) : '';
   $('pg-peran').value = u ? (u.peran || 'PENJUAL') : 'PENJUAL';
   $('pg-email').value = u ? (u.email || '') : '';
   $('pg-pin').value = '';
