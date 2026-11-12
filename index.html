@@ -1024,6 +1024,42 @@ function kartuHtml(p, kecil){
     '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '🛒 Order') + '</button>' +
     '<button class="btn-keranjang" ' + (habis ? 'disabled' : '') + '>＋ Keranjang</button></div>';
 }
+/* Animasi lajur PO: bergeser perlahan ke kiri dan berputar tanpa putus.
+   Berhenti sejenak sesudah disentuh/digeser manual; hormati pengurangan
+   gerak dari sistem. Satu putaran rAF bersama, dimulai ulang tiap render. */
+let poAnimasiId = null;
+let poJedaSampai = 0;
+function mulaiAnimasiPo_(){
+  const el = $('daftar-po');
+  if (poAnimasiId) { cancelAnimationFrame(poAnimasiId); poAnimasiId = null; }
+  if (!el || !el.querySelector('.kartu-po.duplikat')) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!el.dataset.jedaTerpasang) {
+    el.dataset.jedaTerpasang = '1';
+    const jeda = () => { poJedaSampai = performance.now() + 4000; };
+    el.addEventListener('pointerdown', jeda);
+    el.addEventListener('touchstart', jeda, { passive: true });
+    el.addEventListener('wheel', jeda, { passive: true });
+  }
+  let terakhir = 0;
+  const langkah = (t) => {
+    poAnimasiId = requestAnimationFrame(langkah);
+    if (!el.isConnected || !$('seksi-po') || $('seksi-po').style.display === 'none') { terakhir = t; return; }
+    if (document.hidden || t < poJedaSampai) { terakhir = t; return; }
+    if (terakhir) {
+      const dt = Math.min(t - terakhir, 80);
+      el.scrollLeft += dt * 0.03; // ±30 px per detik
+      const pertama = el.querySelector('.kartu-po:not(.duplikat)');
+      const salinan = el.querySelector('.kartu-po.duplikat');
+      if (pertama && salinan) {
+        const periode = salinan.offsetLeft - pertama.offsetLeft;
+        if (periode > 0 && el.scrollLeft >= periode) el.scrollLeft -= periode;
+      }
+    }
+    terakhir = t;
+  };
+  poAnimasiId = requestAnimationFrame(langkah);
+}
 function renderKatalog(){
   const hasil = semuaProduk.filter(cocokFilter);
   /* Bagian PO */
@@ -1038,6 +1074,19 @@ function renderKatalog(){
     d.addEventListener('click', () => bukaDetail(p.id));
     elPo.appendChild(d);
   });
+  // Animasi jalan ke kiri: daftar digandakan supaya bisa berputar tanpa
+  // putus; salinannya berfungsi sama seperti kartu asli (ketuk -> detail).
+  if (po.length >= 2) {
+    po.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'kartu-po duplikat';
+      d.setAttribute('aria-hidden', 'true');
+      d.innerHTML = kartuHtml(p, true);
+      d.addEventListener('click', () => bukaDetail(p.id));
+      elPo.appendChild(d);
+    });
+  }
+  mulaiAnimasiPo_();
   /* Grid umum */
   const grid = $('daftar-produk');
   grid.innerHTML = '';
