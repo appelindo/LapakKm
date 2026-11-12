@@ -101,6 +101,19 @@
   .item .aksi{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
   .lencana-status{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:9px;background:#eef3f2;color:#2e7d6b}
   .lencana-status.habis{background:#fdecea;color:#c62828}
+  .lencana-status.batal{background:#eee;color:#888}
+  /* Kartu grup pesanan masuk (satu kartu per pembeli/checkout) */
+  .kgp-kepala{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .kgp-item{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--garis);align-items:flex-start}
+  .kgp-item img,.kgp-tanpa-foto{width:46px;height:46px;border-radius:8px;object-fit:cover;flex:0 0 46px;background:#f3f3f3}
+  .kgp-tanpa-foto{display:flex;align-items:center;justify-content:center;font-size:20px}
+  .kgp-tengah{flex:1;min-width:0}
+  .kgp-tengah .var{font-size:12px;color:#888}
+  .kgp-kanan{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:13px;white-space:nowrap}
+  .kgp-total{display:flex;justify-content:space-between;padding:9px 0 2px;border-top:1px solid var(--garis);font-size:13px}
+  .btn-batal-item{margin-top:5px;background:none;border:none;color:#c62828;font-size:12px;font-weight:600;padding:2px 0;cursor:pointer;text-decoration:underline;font-family:inherit}
+  .batal-teks{color:#c62828;font-weight:600;font-size:12px}
+  .kotak-batal{background:#fafafa;border:1px solid #e0e0e0;color:#777;border-radius:8px;padding:9px 11px;font-size:12.5px;margin-top:10px}
   .lencana-status.arsip,.lencana-status.sembunyi{background:#eee;color:#616161}
   .lencana-status.selesai{background:#e8f5e9;color:#2e7d32}
   .lencana-status.terkirim{background:#fdf3e0;color:#b97b06}
@@ -730,7 +743,7 @@
   </div>
   <div id="kk-isi"></div>
   <div class="tombol-bawah">
-    <button class="btn oranye" data-tutup>Selesai</button>
+    <button class="btn oranye" id="kk-selesai" data-tutup>Selesai</button>
   </div>
 </div>
 
@@ -897,7 +910,7 @@ const KATEGORI = [
   { nama: 'Lainnya', emoji: '🧺' }
 ];
 const LABEL_BAYAR = { TUNAI: 'Tunai saat ambil barang', TRANSFER: 'Transfer bank', QRIS: 'QRIS' };
-const LABEL_STATUS = { TERKIRIM: 'Terkirim', DIKONFIRMASI: 'Dikonfirmasi', SIAP_DIAMBIL: 'Siap Diambil', SELESAI: 'Selesai' };
+const LABEL_STATUS = { TERKIRIM: 'Terkirim', DIKONFIRMASI: 'Dikonfirmasi', SIAP_DIAMBIL: 'Siap Diambil', SELESAI: 'Selesai', BATAL: 'Dibatalkan' };
 let semuaProduk = [];
 let kataCari = '';
 let kategoriAktif = 'Semua';
@@ -1720,6 +1733,13 @@ $('co-kirim').addEventListener('click', async () => {
   simpanDataPembeli({ nama, noWa, tim: $('co-tim').value.trim() });
   tampilKonfirmasiKeranjang(hasil, grupKode, checkoutKtx.metode, gagalItem);
 });
+function pesanGrup_(g, grupKode, metode){
+  const lapak = g.lapak || {};
+  let pesan = 'Halo ' + (lapak.nama || g.namaLapak) + ', saya baru checkout lewat LapakKM.\nGrup checkout: ' + grupKode + '\n';
+  g.pesanan.forEach(ps => { pesan += '- ' + ps.nama + (ps.variasi ? ' (' + ps.variasi + ')' : '') + ' × ' + ps.jumlah + ' (' + ps.kode + ')\n'; });
+  pesan += 'Total: ' + rp(g.total) + '\nPembayaran: ' + (LABEL_BAYAR[metode] || metode) + '\nMohon konfirmasinya, terima kasih.';
+  return pesan;
+}
 function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
   simpanKodePesanan(grupKode); // riwayat pembeli: kode grup menempel di HP ini
   $('kk-grup').textContent = grupKode;
@@ -1758,11 +1778,28 @@ function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
     const g = hasil[b.dataset.lapak];
     if (!g) return;
     const lapak = g.lapak || {};
-    let pesan = 'Halo ' + (lapak.nama || g.namaLapak) + ', saya baru checkout lewat LapakKM.\nGrup checkout: ' + grupKode + '\n';
-    g.pesanan.forEach(ps => { pesan += '- ' + ps.nama + (ps.variasi ? ' (' + ps.variasi + ')' : '') + ' × ' + ps.jumlah + ' (' + ps.kode + ')\n'; });
-    pesan += 'Total: ' + rp(g.total) + '\nPembayaran: ' + (LABEL_BAYAR[metode] || metode) + '\nMohon konfirmasinya, terima kasih.';
-    window.open(tautanWa(lapak.noWa, pesan), '_blank');
+    window.open(tautanWa(lapak.noWa, pesanGrup_(g, grupKode, metode)), '_blank');
   }));
+  // Tombol Selesai: bila checkout hanya berisi SATU lapak, sekalian buka WA
+  // lapak itu (sama seperti konfirmasi order tunggal). Banyak lapak tetap
+  // hanya menutup lembar — WA dikirim per lapak lewat tombol Chat di atas,
+  // karena peramban memblokir banyak tab sekaligus. Tombol diganti klonnya
+  // supaya pendengar data-tutup bawaan tidak ikut menutup lebih dulu.
+  const tombolLama = $('kk-selesai');
+  const tombolSelesai = tombolLama.cloneNode(true);
+  tombolLama.replaceWith(tombolSelesai);
+  const kunciLapak = Object.keys(hasil);
+  if (kunciLapak.length === 1) {
+    const g = hasil[kunciLapak[0]];
+    const lapak = g.lapak || {};
+    tombolSelesai.removeAttribute('data-tutup');
+    tombolSelesai.addEventListener('click', () => {
+      if (lapak.noWa) window.open(tautanWa(lapak.noWa, pesanGrup_(g, grupKode, metode)), '_blank');
+      tutupLembar();
+    });
+  } else {
+    tombolSelesai.addEventListener('click', () => tutupLembar());
+  }
   bukaLembar('lembar-konfirmasi-keranjang');
 }
 segarkanLencanaKeranjang();
@@ -2243,39 +2280,116 @@ async function muatPesananSaya(){
       wadah.innerHTML = '<p class="sub">Belum ada pesanan masuk. Pesanan pembeli akan tampil di sini.</p>';
       return;
     }
+    // Gabung per checkout: item-item satu kode grup tampil sebagai SATU
+    // kartu per pembeli (gaya marketplace); order tunggal berdiri sendiri.
+    const grupMap = new Map();
     daftar.forEach(o => {
-      const idPesanan = o.idPesanan || o.id || '';
-      const langkah = LANGKAH_BERIKUT[o.status];
-      const d = document.createElement('div');
-      d.className = 'item';
-      d.innerHTML =
-        '<div class="nm">' + esc(o.namaProduk || '') + '</div>' +
-        '<div class="info">Kode: ' + esc(idPesanan) + (o.grup ? ' · Grup ' + esc(o.grup) : '') + '<br>Pembeli: ' + esc(o.namaPembeli || o.nama || '–') + (o.tim ? ' · ' + esc(o.tim) : '') +
-        '<br>WA: ' + esc(waIndo(o.noWa) || '–') +
-        (o.variasi ? '<br>Variasi: ' + esc(o.variasi) + (o.hargaSatuan ? ' · ' + rp(o.hargaSatuan) + ' / pcs' : '') : '') +
-        '<br>Jumlah: ' + esc(o.jumlah == null ? '–' : o.jumlah) + ' · Total: <b>' + rp(o.total) + '</b> · ' + esc(LABEL_BAYAR[o.metode] || o.metode || '') +
-        (o.catatan ? '<br>Catatan: ' + esc(o.catatan) : '') + '</div>' +
-        '<span class="lencana-status ' + (o.status === 'SELESAI' ? 'selesai' : '') + '">' + esc(LABEL_STATUS[o.status] || o.status || '') + '</span>' +
-        '<div class="aksi">' +
-        (o.noWa ? '<button class="btn-kecil" data-chat="1">💬 Chat Pembeli</button>' : '') +
-        (langkah ? '<button class="btn-kecil hijau" data-langkah="1">' + langkah.label + '</button>' : '') +
-        '</div>';
-      const tombolChat = d.querySelector('[data-chat]');
-      if (tombolChat) tombolChat.addEventListener('click', () => {
-        const namaLapakSaya = (profilCache && profilCache.lapak && profilCache.lapak.nama) || 'penjual LapakKM';
-        const pesan = 'Halo ' + (o.namaPembeli || 'kak') + ', saya dari ' + namaLapakSaya + ' (LapakKM).\n' +
-          'Pesanan ' + idPesanan + ': ' + (o.namaProduk || '') + (o.variasi ? ' (' + o.variasi + ')' : '') +
-          ' × ' + (o.jumlah == null ? 1 : o.jumlah) + ', total ' + rp(o.total) + '.\n' +
-          'Status saat ini: ' + (LABEL_STATUS[o.status] || o.status || '') + '.';
-        window.open(tautanWa(o.noWa, pesan), '_blank');
-      });
-      const tombol = d.querySelector('[data-langkah]');
-      if (tombol) tombol.addEventListener('click', () => majuStatusPesanan(idPesanan, langkah.status, tombol));
-      wadah.appendChild(d);
+      const kunci = o.grup || (o.idPesanan || o.id);
+      if (!grupMap.has(kunci)) grupMap.set(kunci, []);
+      grupMap.get(kunci).push(o);
     });
+    grupMap.forEach(items => { wadah.appendChild(kartuGrupPesanan_(items)); });
   } catch (e) {
     wadah.innerHTML = '<p class="sub">' + esc(e.message) + '</p>';
   }
+}
+function statusGrupPesanan_(items){
+  const urutan = ['TERKIRIM', 'DIKONFIRMASI', 'SIAP_DIAMBIL', 'SELESAI'];
+  let idx = -1;
+  items.forEach(o => {
+    const i = urutan.indexOf(o.status);
+    if (i >= 0 && (idx < 0 || i < idx)) idx = i;
+  });
+  return idx < 0 ? 'BATAL' : urutan[idx];
+}
+function kartuGrupPesanan_(items){
+  const pertama = items[0];
+  const statusGrup = statusGrupPesanan_(items);
+  const langkah = LANGKAH_BERIKUT[statusGrup];
+  const totalQty = items.reduce((s, o) => s + (Number(o.jumlah) || 0), 0);
+  const totalHarga = items.reduce((s, o) => s + (Number(o.total) || 0), 0);
+  const catatan = items.map(o => o.catatan).filter(Boolean)[0] || '';
+  const d = document.createElement('div');
+  d.className = 'item';
+  let html =
+    '<div class="kgp-kepala"><b>👤 ' + esc(pertama.namaPembeli || pertama.nama || '–') + '</b>' +
+    '<span class="lencana-status ' + (statusGrup === 'SELESAI' ? 'selesai' : statusGrup === 'BATAL' ? 'batal' : '') + '">' +
+    esc(LABEL_STATUS[statusGrup] || statusGrup) + '</span></div>' +
+    '<div class="info">' +
+    (pertama.grup ? 'Grup ' + esc(pertama.grup) : 'Kode ' + esc(pertama.idPesanan || pertama.id || '')) +
+    (pertama.waktu ? ' · ' + esc(pertama.waktu) : '') +
+    (pertama.tim ? '<br>Tim: ' + esc(pertama.tim) : '') +
+    '<br>WA: ' + esc(waIndo(pertama.noWa) || '–') + ' · ' + esc(LABEL_BAYAR[pertama.metode] || pertama.metode || '') +
+    (catatan ? '<br>Catatan: ' + esc(catatan) : '') + '</div>';
+  items.forEach(o => {
+    const idPesanan = o.idPesanan || o.id || '';
+    html += '<div class="kgp-item">' +
+      (o.fotoUrl ? '<img src="' + esc(o.fotoUrl) + '" alt="">' : '<div class="kgp-tanpa-foto">🛍️</div>') +
+      '<div class="kgp-tengah"><div class="nm">' + esc(o.namaProduk || '') + '</div>' +
+      (o.variasi ? '<div class="var">' + esc(o.variasi) + (o.hargaSatuan ? ' · ' + rp(o.hargaSatuan) + ' / pcs' : '') + '</div>' : '') +
+      '<div class="var">Kode: ' + esc(idPesanan) + '</div>' +
+      (o.status !== statusGrup
+        ? '<span class="lencana-status ' + (o.status === 'BATAL' ? 'batal' : o.status === 'SELESAI' ? 'selesai' : '') + '">' + esc(LABEL_STATUS[o.status] || o.status) + '</span>'
+        : '') +
+      (o.status === 'TERKIRIM' ? '<br><button class="btn-batal-item" data-batal="' + esc(idPesanan) + '">Batalkan</button>' : '') +
+      '</div>' +
+      '<div class="kgp-kanan"><span>×' + esc(o.jumlah == null ? '–' : o.jumlah) + '</span><b>' + rp(o.total) + '</b></div>' +
+      '</div>';
+  });
+  html += '<div class="kgp-total"><span>Total ' + totalQty + ' produk</span><b>' + rp(totalHarga) + '</b></div>';
+  html += '<div class="aksi">' +
+    (pertama.noWa ? '<button class="btn-kecil" data-chat="1">💬 Chat Pembeli</button>' : '') +
+    (langkah ? '<button class="btn-kecil hijau" data-langkah="1">' + langkah.label + (items.length > 1 ? ' Semua' : '') + '</button>' : '') +
+    '</div>';
+  d.innerHTML = html;
+  const tombolChat = d.querySelector('[data-chat]');
+  if (tombolChat) tombolChat.addEventListener('click', () => {
+    const namaLapakSaya = (profilCache && profilCache.lapak && profilCache.lapak.nama) || 'penjual LapakKM';
+    let pesan = 'Halo ' + (pertama.namaPembeli || 'kak') + ', saya dari ' + namaLapakSaya + ' (LapakKM).\n';
+    items.forEach(o => {
+      pesan += '- ' + (o.namaProduk || '') + (o.variasi ? ' (' + o.variasi + ')' : '') +
+        ' × ' + (o.jumlah == null ? 1 : o.jumlah) + ' — ' + rp(o.total) + '\n';
+    });
+    pesan += 'Total: ' + rp(totalHarga) + '\nStatus saat ini: ' + (LABEL_STATUS[statusGrup] || statusGrup) + '.';
+    window.open(tautanWa(pertama.noWa, pesan), '_blank');
+  });
+  const tombol = d.querySelector('[data-langkah]');
+  if (tombol) tombol.addEventListener('click', async () => {
+    tombol.disabled = true;
+    tombol.textContent = 'Memproses…';
+    try {
+      for (const o of items) {
+        if (o.status === statusGrup) {
+          await api('statusPesanan', { token: sesi.token, idPesanan: o.idPesanan || o.id, status: langkah.status });
+        }
+      }
+      toast('Status pesanan diperbarui.');
+    } catch (e) {
+      toast(e.message);
+    }
+    muatPesananSaya();
+  });
+  d.querySelectorAll('[data-batal]').forEach(b => b.addEventListener('click', async () => {
+    if (!b.dataset.yakin) {
+      b.dataset.yakin = '1';
+      b.textContent = 'Yakin? Ketuk sekali lagi';
+      setTimeout(() => { if (b.isConnected) { delete b.dataset.yakin; b.textContent = 'Batalkan'; } }, 4000);
+      return;
+    }
+    b.disabled = true;
+    b.textContent = 'Membatalkan…';
+    try {
+      await api('batalkanPesanan', { token: sesi.token, idPesanan: b.dataset.batal });
+      toast('Pesanan dibatalkan — stok dikembalikan.');
+      muatPesananSaya();
+    } catch (e) {
+      toast(e.message);
+      b.disabled = false;
+      b.textContent = 'Batalkan';
+      delete b.dataset.yakin;
+    }
+  }));
+  return d;
 }
 async function majuStatusPesanan(idPesanan, status, tombol){
   tombol.disabled = true;
@@ -2478,7 +2592,7 @@ function jamKini_(){
   return String(d.getHours()).padStart(2, '0') + '.' + String(d.getMinutes()).padStart(2, '0');
 }
 function lencanaStatusPembeli_(status){
-  const kelas = { TERKIRIM: 'terkirim', DIKONFIRMASI: 'dikonfirmasi', SIAP_DIAMBIL: 'siap-diambil', SELESAI: 'selesai' }[status] || '';
+  const kelas = { TERKIRIM: 'terkirim', DIKONFIRMASI: 'dikonfirmasi', SIAP_DIAMBIL: 'siap-diambil', SELESAI: 'selesai', BATAL: 'batal' }[status] || '';
   const label = status === 'TERKIRIM' ? 'Menunggu Konfirmasi' : (LABEL_STATUS[status] || status);
   return '<span class="lencana-status ' + kelas + '">' + esc(label) + '</span>';
 }
@@ -2496,7 +2610,12 @@ function langkahHtml_(status){
 }
 function barisBarangPembeli_(p){
   return '<div class="baris"><span>' + esc(p.namaProduk) + (p.variasi ? ' (' + esc(p.variasi) + ')' : '') +
-    ' × ' + p.jumlah + '</span><b>' + rp(p.total) + '</b></div>';
+    ' × ' + p.jumlah + (p.status === 'BATAL' ? ' <span class="batal-teks">Dibatalkan</span>' : '') +
+    '</span><b>' + rp(p.total) + '</b></div>';
+}
+function tombolBatalPembeli_(p){
+  if (p.status !== 'TERKIRIM') return '';
+  return '<div style="margin-top:8px"><button class="btn-kecil bahaya ps-batal" data-id="' + esc(p.id) + '">Batalkan Pesanan</button></div>';
 }
 function tombolChatPembeli_(lapak, kode){
   if (!lapak || !lapak.noWa) return '';
@@ -2525,20 +2644,27 @@ function kartuPesananPembeli_(p){
     (lapak.ruangan ? ' · ' + esc(lapak.ruangan) : '') + '</b></div>';
   html += '<div class="baris"><span>Pembayaran</span><b>' + esc(LABEL_BAYAR[p.metode] || p.metode || '') + '</b></div>';
   html += langkahHtml_(p.status);
+  if (p.status === 'BATAL') {
+    html += '<div class="kotak-batal">🚫 Pesanan ini dibatalkan.</div>';
+  }
   if (p.status === 'SIAP_DIAMBIL') {
     html += '<div class="kotak-siap">✅ Pesananmu sudah siap diambil di <b>' + esc(lapak.nama || 'lapak') + '</b>' +
       (lapak.ruangan ? ' (' + esc(lapak.ruangan) + ')' : '') + '. Bayar <b>' + rp(p.total) + '</b> saat pengambilan.</div>';
   }
   html += tombolChatPembeli_(lapak, p.id);
+  html += tombolBatalPembeli_(p);
   if (p.status === 'SELESAI') html += blokUlasanPembeli_(p, false);
   html += '</div>';
   return html;
 }
 function statusTerendah_(items){
   const urutan = ['TERKIRIM', 'DIKONFIRMASI', 'SIAP_DIAMBIL', 'SELESAI'];
-  let idx = urutan.length - 1;
-  items.forEach(p => { const i = urutan.indexOf(p.status); if (i >= 0 && i < idx) idx = i; });
-  return urutan[idx];
+  let idx = -1;
+  items.forEach(p => {
+    const i = urutan.indexOf(p.status);
+    if (i >= 0 && (idx < 0 || i < idx)) idx = i;
+  });
+  return idx < 0 ? 'BATAL' : urutan[idx];
 }
 function kartuGrupPembeli_(grup, items){
   const perLapak = {};
@@ -2554,7 +2680,7 @@ function kartuGrupPembeli_(grup, items){
     const statusGrup = statusTerendah_(grupLapak);
     html += '<div class="sub-lapak' + (urut === 0 ? ' pertama' : '') + '"><div class="kp-kepala"><b style="font-size:13px">🏪 ' +
       esc(lapak.nama || '—') + '</b>' + lencanaStatusPembeli_(statusGrup) + '</div>';
-    grupLapak.forEach(p => { html += barisBarangPembeli_(p); });
+    grupLapak.forEach(p => { html += barisBarangPembeli_(p); html += tombolBatalPembeli_(p); });
     grupLapak.forEach(p => { if (p.status === 'SELESAI') html += blokUlasanPembeli_(p, true); });
     if (statusGrup === 'SIAP_DIAMBIL') {
       html += '<div class="kotak-siap">✅ Bagian lapak ini sudah siap diambil' +
@@ -2641,6 +2767,27 @@ function gambarPesananSaya(){
   }));
   wadah.querySelectorAll('.ps-beri-ulasan').forEach(b => b.addEventListener('click', () => {
     bukaUlasan_(b.dataset.id, b.dataset.produk, b.dataset.lapak);
+  }));
+  wadah.querySelectorAll('.ps-batal').forEach(b => b.addEventListener('click', async () => {
+    if (!b.dataset.yakin) {
+      b.dataset.yakin = '1';
+      b.textContent = 'Yakin batalkan? Ketuk sekali lagi';
+      setTimeout(() => { if (b.isConnected) { delete b.dataset.yakin; b.textContent = 'Batalkan Pesanan'; } }, 4000);
+      return;
+    }
+    b.disabled = true;
+    b.textContent = 'Membatalkan…';
+    try {
+      await api('batalkanPesanan', { idPesanan: b.dataset.id });
+      toast('Pesanan dibatalkan.');
+      try { await tarikPesananSaya(); } catch (e) {}
+      gambarPesananSaya();
+    } catch (e) {
+      toast(e.message);
+      b.disabled = false;
+      b.textContent = 'Batalkan Pesanan';
+      delete b.dataset.yakin;
+    }
   }));
   $('ps-sub').textContent = 'Status diambil langsung dari server · diperbarui ' + jamKini_() +
     ' — tutup lalu buka lagi lembar ini untuk menyegarkan.';
