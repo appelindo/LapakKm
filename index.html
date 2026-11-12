@@ -580,19 +580,40 @@ async function api(aksi, data){
   return balas.data;
 }
 
-/* ================= Lembar (panel geser) ================= */
+/* ================= Lembar (panel geser) =================
+   Lembar terhubung ke riwayat peramban: membuka lembar menambahkan satu entri
+   history, jadi tombol Kembali di HP menutup lembar — BUKAN keluar aplikasi.
+   Menutup lewat ✕ / latar gelap / tombol Selesai memakan entri itu kembali. */
 const gelap = $('gelap');
+let lembarRiwayatAktif = false;     // entri history milik lembar sedang aktif
+let abaikanPopstateBerikut = false; // popstate yang dipicu tutupLembar() sendiri
 function bukaLembar(id){
-  tutupLembar();
+  tutupLembar(true);
   gelap.classList.add('buka');
   $(id).classList.add('buka');
+  if (!lembarRiwayatAktif) {
+    try { history.pushState({ lembarLapakKM: true }, ''); } catch (e) {}
+    lembarRiwayatAktif = true;
+  }
 }
-function tutupLembar(){
+function tutupLembar(dariDalam){
   gelap.classList.remove('buka');
   document.querySelectorAll('.lembar').forEach(l => l.classList.remove('buka'));
+  if (lembarRiwayatAktif && !dariDalam) {
+    lembarRiwayatAktif = false;
+    abaikanPopstateBerikut = true;
+    try { history.back(); } catch (e) {}
+  }
 }
-gelap.addEventListener('click', tutupLembar);
-document.querySelectorAll('[data-tutup]').forEach(b => b.addEventListener('click', tutupLembar));
+window.addEventListener('popstate', () => {
+  if (abaikanPopstateBerikut) { abaikanPopstateBerikut = false; return; }
+  if (lembarRiwayatAktif) {
+    lembarRiwayatAktif = false;
+    tutupLembar(true); // cukup sembunyikan — pengguna memang menekan Kembali
+  }
+});
+gelap.addEventListener('click', () => tutupLembar());
+document.querySelectorAll('[data-tutup]').forEach(b => b.addEventListener('click', () => tutupLembar()));
 
 /* ================= Keadaan aplikasi ================= */
 const KATEGORI = [
