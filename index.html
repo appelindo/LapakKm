@@ -1197,7 +1197,9 @@ function terapkanSubPenjual(){
   // Belum punya lapak: satu-satunya halaman yang berlaku adalah buat profil.
   const sub = punyaLapak ? subPenjualAktif : 'profil';
   $('pj-bungkus-profil').style.display = (sub === 'profil') ? '' : 'none';
-  $('pj-bungkus-produk').style.display = (sub === 'produk') ? '' : 'none';
+  // Tampilan awal Lapak Saya langsung memuat daftar Produk Saya di bawah menu;
+  // halaman Produk terpisah tetap dipakai saat menu Produk dipilih.
+  $('pj-bungkus-produk').style.display = (punyaLapak && (sub === 'produk' || sub === '')) ? '' : 'none';
   $('pj-bungkus-pesanan').style.display = (sub === 'pesanan') ? '' : 'none';
   $('pj-bungkus-menu').style.display = (punyaLapak && !sub) ? '' : 'none';
   const bar = $('pj-sub-bar');
