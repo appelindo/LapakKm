@@ -772,11 +772,9 @@ $('kotak-cari').addEventListener('input', e => {
 });
 
 /* ================= Detail produk ================= */
-async function bukaDetail(idProduk){
-  toast('Memuat detail…');
-  try {
-    const data = await api('detail', { idProduk: idProduk });
-    const p = data.produk, l = data.lapak || {};
+/* Mengisi lembar detail dari objek produk + lapak. Dipakai untuk tampilan
+   seketika dari data katalog, lalu untuk penyegaran dari server. */
+function isiDetail_(p, l){
     produkAktif = Object.assign({}, p, { lapakDetail: l });
     const wadahFoto = $('d-foto');
     wadahFoto.className = 'foto-besar ' + kelasWarna(p.nama);
@@ -809,10 +807,42 @@ async function bukaDetail(idProduk){
     const tombolOrder = $('d-order');
     if (p.status === 'HABIS') { tombolOrder.disabled = true; tombolOrder.textContent = 'Stok Habis'; }
     else { tombolOrder.disabled = false; tombolOrder.textContent = '🛒 Order Sekarang'; }
+}
+
+/* Detail terbuka SEKETIKA dari data katalog yang sudah ada di layar — semua
+   isi lembar (foto, harga, variasi, stok, deskripsi, nama lapak, tim/ruangan)
+   memang sudah termuat di data katalog. Data server tetap diambil di latar
+   untuk menyegarkan stok/status dan data lapak lengkap. Produk yang tidak
+   ada di katalog (mis. tautan ?produk= yang dibuka sebelum katalog tiba)
+   tetap memakai jalur tunggu-server seperti sebelumnya. */
+async function bukaDetail(idProduk){
+  const dariKatalog = semuaProduk.find(p => p.id === idProduk);
+  if (dariKatalog) {
+    isiDetail_(dariKatalog, dariKatalog.lapak || {});
+    bukaLembar('lembar-detail');
+    segarkanDetail_(idProduk);
+    return;
+  }
+  toast('Memuat detail…');
+  try {
+    const data = await api('detail', { idProduk: idProduk });
+    isiDetail_(data.produk, data.lapak || {});
     bukaLembar('lembar-detail');
   } catch (e) {
     toast(e.message);
   }
+}
+
+/* Penyegaran latar sesudah tampilan seketika: terapkan hanya bila lembar
+   detail masih menampilkan produk yang sama. Kegagalan diabaikan diam-diam
+   karena tampilan dari data katalog sudah cukup. */
+async function segarkanDetail_(idProduk){
+  try {
+    const data = await api('detail', { idProduk: idProduk });
+    if (!produkAktif || produkAktif.id !== idProduk) return;
+    if ($('lembar-detail').classList.contains('buka')) isiDetail_(data.produk, data.lapak || {});
+    else produkAktif = Object.assign({}, data.produk, { lapakDetail: data.lapak || {} });
+  } catch (e) { /* abaikan */ }
 }
 $('d-order').addEventListener('click', () => { if (produkAktif) bukaOrder(produkAktif); });
 $('d-bagikan').addEventListener('click', () => { if (produkAktif) bagikanProduk(produkAktif); });
