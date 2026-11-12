@@ -244,6 +244,38 @@
   .status-alur .titik2 span{font-size:9.5px;color:var(--teks2);text-align:center;line-height:1.25}
   .status-alur .garis2{flex:1;height:2px;background:#eee;margin-top:13px}
 
+  /* ===== Ulasan pembeli ===== */
+  .penilaian{font-size:11.5px;color:#888;margin-top:3px}
+  .penilaian b{color:#f6a609}
+  .bintang-teks{color:#f6a609;letter-spacing:1px;font-size:12.5px}
+  .btn-ulasan{display:block;width:100%;margin-top:10px;background:#f6a609;color:#fff;border:none;font-weight:800;font-size:13.5px;padding:10px;border-radius:9px;cursor:pointer}
+  .sudah-ulasan{margin-top:10px;background:#fdf6e3;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#7a5b06;line-height:1.55}
+  .bintang-pilih{text-align:center;font-size:38px;letter-spacing:6px;cursor:pointer;user-select:none;line-height:1.2}
+  .bintang-pilih span{color:#ddd}
+  .bintang-pilih span.nyala{color:#f6a609}
+  .ulasan-item{border-top:1px solid var(--garis);padding:10px 0 4px}
+  .ulasan-item .siapa{display:flex;gap:7px;align-items:baseline}
+  .ulasan-item .siapa b{font-size:13px}
+  .ulasan-item .siapa small{color:#aaa;font-size:11px;margin-left:auto}
+  .ulasan-item p{font-size:13px;color:#444;line-height:1.5;margin-top:3px}
+
+  /* ===== Menu penjual gaya Shopee ===== */
+  .kartu-id{background:#fff;margin-top:10px;padding:13px 12px;display:flex;align-items:center;gap:12px;cursor:pointer}
+  .kartu-id .ava-besar{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#ffb59d,#ee4d2d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex:0 0 50px}
+  .kartu-id .nama-lapak{font-size:16.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kartu-id .pemilik{color:#888;font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kartu-id .panah{color:#bbb;font-size:20px;margin-left:auto}
+  .strip-angka{background:#fff;margin-top:10px;padding:13px 4px 11px;display:flex}
+  .strip-angka .sel{flex:1;text-align:center}
+  .strip-angka .n{font-size:20px;font-weight:800;line-height:1.1}
+  .strip-angka .n.aksi{color:var(--oranye)}
+  .strip-angka .l{font-size:10.5px;color:#888;margin-top:3px;line-height:1.3;padding:0 2px}
+  .menu-grid{background:#fff;margin-top:10px;padding:13px 4px 11px;display:flex}
+  .menu-grid .mi{flex:1;text-align:center;cursor:pointer;position:relative;background:none;border:none;font-family:inherit;padding:0}
+  .menu-grid .ki{width:45px;height:45px;margin:0 auto;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .menu-grid .ml{font-size:10.8px;color:#444;margin-top:5px;line-height:1.25;padding:0 1px}
+  .menu-grid .bdg{position:absolute;top:-4px;right:calc(50% - 26px);background:var(--oranye);color:#fff;font-size:9.5px;font-weight:800;border-radius:11px;padding:1px 6px;border:2px solid #fff}
+
   .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;border-radius:22px;font-size:13px;z-index:70;opacity:0;transition:.25s;pointer-events:none;max-width:88vw;text-align:center;line-height:1.45}
   .toast.tampil{opacity:1}
 </style>
@@ -279,12 +311,25 @@
 
   <!-- ======== TAMPILAN PENJUAL ======== -->
   <div id="view-penjual" style="display:none">
-    <div class="bar-view"><button class="btn-kembali" data-nav="beranda">‹ Beranda</button><b>Lapak Saya</b></div>
-    <div class="blok">
-      <div class="sapaan">
-        <div class="ava">🧑‍🍳</div>
-        <div style="flex:1"><b id="pj-nama">—</b><span id="pj-peran">—</span></div>
-        <button class="btn-kecil bahaya" id="pj-keluar">Keluar</button>
+    <div class="bar-view"><button class="btn-kembali" data-nav="beranda">‹ Beranda</button><b>Lapak Saya</b><button class="btn-kecil bahaya" id="pj-keluar" style="margin-left:auto">Keluar</button></div>
+    <div class="kartu-id" id="pj-kartu-id">
+      <div class="ava-besar" id="pj-ava">L</div>
+      <div style="flex:1;min-width:0"><div class="nama-lapak" id="pj-lapak-nama">—</div><div class="pemilik" id="pj-pemilik">—</div></div>
+      <span class="panah">›</span>
+    </div>
+    <div id="pj-bungkus-menu" style="display:none">
+      <div class="strip-angka">
+        <div class="sel"><div class="n aksi" id="mp-perlu">0</div><div class="l">Perlu Konfirmasi</div></div>
+        <div class="sel"><div class="n" id="mp-siap">0</div><div class="l">Siap Diambil</div></div>
+        <div class="sel"><div class="n" id="mp-selesai">0</div><div class="l">Selesai</div></div>
+        <div class="sel"><div class="n" id="mp-total">0</div><div class="l">Total Pesanan</div></div>
+      </div>
+      <div class="menu-grid">
+        <button class="mi" data-menu="produk"><span class="ki" style="background:#fff1ec">📦</span><div class="ml">Produk Saya</div></button>
+        <button class="mi" data-menu="pesanan"><span class="ki" style="background:#fdf3e0">🧾</span><div class="ml">Pesanan Masuk</div><span class="bdg" id="mp-lencana" style="display:none">0</span></button>
+        <button class="mi" data-menu="profil"><span class="ki" style="background:#e3f6f2">🏪</span><div class="ml">Profil Lapak</div></button>
+        <button class="mi" data-menu="toko"><span class="ki" style="background:#e8f1fe">👁️</span><div class="ml">Halaman Toko</div></button>
+        <button class="mi" data-menu="tambah"><span class="ki" style="background:#f3e8fd">➕</span><div class="ml">Tambah Jualan</div></button>
       </div>
     </div>
 
@@ -420,6 +465,7 @@
     <div id="d-variasi" style="display:none"></div>
     <div class="meta" id="d-meta"></div>
     <div class="desk" id="d-desk"></div>
+    <div id="d-penilaian"></div>
     <div class="penjual-box">
       <div class="ava">🧑‍🍳</div>
       <div><b id="d-penjual"></b><span id="d-lokasi"></span></div>
@@ -682,6 +728,29 @@
   </div>
 </div>
 
+<!-- ===== Lembar BERI ULASAN (untuk pesanan SELESAI) ===== -->
+<div class="lembar" id="lembar-ulasan">
+  <div class="pegangan"></div>
+  <div class="kepala"><b>⭐ Beri Ulasan</b><button class="x" data-tutup>✕</button></div>
+  <div class="isi">
+    <div style="margin:12px 16px 0">
+      <div id="u-produk" style="font-weight:700;font-size:15px"></div>
+      <div id="u-info" style="color:#888;font-size:12.5px;margin-top:2px"></div>
+    </div>
+    <div class="kotak" style="margin-bottom:16px">
+      <div class="sub" style="font-weight:700;text-align:center">Bagaimana pengalamanmu?</div>
+      <div class="bintang-pilih" id="u-bintang"><span data-n="1">★</span><span data-n="2">★</span><span data-n="3">★</span><span data-n="4">★</span><span data-n="5">★</span></div>
+      <div class="sub" id="u-ket-bintang" style="text-align:center;min-height:16px">Ketuk bintang untuk menilai</div>
+      <div class="form" style="margin-top:8px">
+        <div class="grup"><label>Komentar (opsional)</label><textarea id="u-komentar" rows="3" placeholder="Ceritakan rasa, porsi, pelayanan…"></textarea></div>
+        <div class="galat" id="u-galat"></div>
+        <button class="btn oranye" id="u-kirim" style="width:100%">Kirim Ulasan</button>
+      </div>
+      <p class="sub" style="margin-top:10px">Ulasan tampil atas nama yang kamu pakai saat memesan. Satu pesanan hanya bisa diulas satu kali.</p>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -899,13 +968,15 @@ function kartuHtml(p, kecil){
   const lencanaMode = p.mode === 'PO' ? '<span class="lencana po">PO</span>' : '<span class="lencana">Ready</span>';
   const lencanaHabis = habis ? '<span class="lencana habis">HABIS</span>' : '';
   const namaLapak = (p.lapak && p.lapak.nama) || '';
+  const nilaiHtml = (p.penilaian && p.penilaian.jumlah)
+    ? '<div class="penilaian"><b>★ ' + esc(p.penilaian.rata) + '</b> (' + p.penilaian.jumlah + ' ulasan)</div>' : '';
   if (kecil) {
     const infoPo = p.tglAmbil ? 'Ambil: ' + esc(p.tglAmbil) : ('Stok: ' + esc(p.stok == null ? '–' : p.stok));
     return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
-      '<div class="isi-po"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div><div class="kecil">' + infoPo + '</div></div>';
+      '<div class="isi-po"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' + nilaiHtml + '<div class="kecil">' + infoPo + '</div></div>';
   }
   return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
-    '<div class="isi"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' +
+    '<div class="isi"><div class="nm">' + esc(p.nama) + '</div><div class="harga">' + hargaTampil(p) + '</div>' + nilaiHtml +
     '<div class="penjual">🧑 ' + esc(namaLapak) + '</div>' +
     '<div class="meta"><span>' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + '</span><span>Stok ' + esc(p.stok == null ? '–' : p.stok) + '</span></div>' +
     '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '🛒 Order') + '</button>' +
@@ -958,7 +1029,33 @@ $('kotak-cari').addEventListener('input', e => {
 /* ================= Detail produk ================= */
 /* Mengisi lembar detail dari objek produk + lapak. Dipakai untuk tampilan
    seketika dari data katalog, lalu untuk penyegaran dari server. */
-function isiDetail_(p, l){
+function bintangTeks_(n){
+  n = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+  return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+}
+/* Ringkasan penilaian + daftar ulasan terbaru di lembar detail. Parameter
+   ulasan: array dari server (detail) atau undefined saat tampilan seketika
+   dari katalog (daftarnya menyusul lewat segarkanDetail_). */
+function gambarPenilaian_(p, ulasan){
+  const el = $('d-penilaian');
+  const pen = p.penilaian || { rata: 0, jumlah: 0 };
+  if (!pen.jumlah) {
+    el.innerHTML = '<div class="sub" style="margin-top:12px">⭐ Belum ada ulasan untuk jualan ini.</div>';
+    return;
+  }
+  let html = '<div class="sub" style="font-weight:700;margin-top:12px">⭐ ' + esc(pen.rata) + ' dari ' + pen.jumlah + ' ulasan</div>';
+  if (Array.isArray(ulasan)) {
+    html += ulasan.map(u =>
+      '<div class="ulasan-item"><div class="siapa"><b>' + esc(u.nama || 'Pembeli') + '</b>' +
+      '<span class="bintang-teks">' + bintangTeks_(u.bintang) + '</span>' +
+      '<small>' + esc(formatWaktuPesanan_(u.waktu)) + '</small></div>' +
+      (u.komentar ? '<p>' + esc(u.komentar) + '</p>' : '') + '</div>').join('');
+  } else {
+    html += '<div class="sub" style="margin-top:6px">Memuat ulasan…</div>';
+  }
+  el.innerHTML = html;
+}
+function isiDetail_(p, l, ulasan){
     produkAktif = Object.assign({}, p, { lapakDetail: l });
     const wadahFoto = $('d-foto');
     wadahFoto.className = 'foto-besar ' + kelasWarna(p.nama);
@@ -992,6 +1089,7 @@ function isiDetail_(p, l){
     const tombolOrder = $('d-order');
     if (p.status === 'HABIS') { tombolOrder.disabled = true; tombolOrder.textContent = 'Stok Habis'; }
     else { tombolOrder.disabled = false; tombolOrder.textContent = '🛒 Order Sekarang'; }
+    gambarPenilaian_(p, ulasan);
 }
 
 /* Detail terbuka SEKETIKA dari data katalog yang sudah ada di layar — semua
@@ -1011,7 +1109,7 @@ async function bukaDetail(idProduk){
   toast('Memuat detail…');
   try {
     const data = await api('detail', { idProduk: idProduk });
-    isiDetail_(data.produk, data.lapak || {});
+    isiDetail_(data.produk, data.lapak || {}, data.ulasan);
     bukaLembar('lembar-detail');
   } catch (e) {
     toast(e.message);
@@ -1025,7 +1123,7 @@ async function segarkanDetail_(idProduk){
   try {
     const data = await api('detail', { idProduk: idProduk });
     if (!produkAktif || produkAktif.id !== idProduk) return;
-    if ($('lembar-detail').classList.contains('buka')) isiDetail_(data.produk, data.lapak || {});
+    if ($('lembar-detail').classList.contains('buka')) isiDetail_(data.produk, data.lapak || {}, data.ulasan);
     else produkAktif = Object.assign({}, data.produk, { lapakDetail: data.lapak || {} });
   } catch (e) { /* abaikan */ }
 }
@@ -1035,8 +1133,9 @@ $('d-order').addEventListener('click', () => { if (produkAktif) bukaOrder(produk
    Menampilkan seluruh jualan yang tayang dari satu lapak. Datanya diambil dari
    katalog yang sudah termuat (semuaProduk), jadi terbuka seketika juga. */
 let tokoAktif = null;
-function bukaToko(){
-  const l = (produkAktif && (produkAktif.lapakDetail || produkAktif.lapak)) || null;
+function bukaToko(lapakLangsung){
+  const l = (lapakLangsung && lapakLangsung.id) ? lapakLangsung
+    : (produkAktif && (produkAktif.lapakDetail || produkAktif.lapak)) || null;
   if (!l || !l.id) { toast('Info toko tidak tersedia.'); return; }
   tokoAktif = l;
   $('t-nama').textContent = l.nama || 'Toko Penjual';
@@ -1067,7 +1166,34 @@ function bukaToko(){
   }
   bukaLembar('lembar-toko');
 }
-$('d-toko').addEventListener('click', bukaToko);
+$('d-toko').addEventListener('click', () => bukaToko());
+
+/* ---------- Menu penjual (gaya Shopee Seller) ---------- */
+function gulirKeBlok_(id){ const el = $(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+document.querySelectorAll('#pj-bungkus-menu .mi').forEach(b => b.addEventListener('click', () => {
+  const menu = b.dataset.menu;
+  if (menu === 'produk') gulirKeBlok_('pj-bungkus-produk');
+  else if (menu === 'pesanan') gulirKeBlok_('pj-bungkus-pesanan');
+  else if (menu === 'profil') gulirKeBlok_('pj-bungkus-profil');
+  else if (menu === 'tambah') { gulirKeBlok_('pj-bungkus-produk'); $('pj-tambah-produk').click(); }
+  else if (menu === 'toko') {
+    const lk = (profilCache && profilCache.lapak) || null;
+    if (!lk || !lk.id) { toast('Profil lapak belum lengkap.'); return; }
+    bukaToko({ id: lk.id, nama: lk.nama, tim: lk.tim, ruangan: lk.ruangan, noWa: lk.noWa });
+  }
+}));
+$('pj-kartu-id').addEventListener('click', () => gulirKeBlok_('pj-bungkus-profil'));
+function perbaruiMenuPenjual_(daftar){
+  const hitung = s => daftar.filter(o => o.status === s).length;
+  const perlu = hitung('TERKIRIM');
+  $('mp-perlu').textContent = perlu;
+  $('mp-siap').textContent = hitung('SIAP_DIAMBIL');
+  $('mp-selesai').textContent = hitung('SELESAI');
+  $('mp-total').textContent = daftar.length;
+  const lencana = $('mp-lencana');
+  lencana.textContent = perlu;
+  lencana.style.display = perlu ? '' : 'none';
+}
 $('d-tanya').addEventListener('click', async () => {
   if (!produkAktif) return;
   let l = produkAktif.lapakDetail || {};
@@ -1744,15 +1870,20 @@ async function muatProfil(sesudah){
     const data = await api('profilSaya', { token: sesi.token });
     profilCache = data;
     const pg = data.pengguna || {};
-    $('pj-nama').textContent = pg.nama || sesi.nama || '';
-    $('pj-peran').textContent = (pg.peran || sesi.peran || '') + (pg.tim ? ' · ' + pg.tim : '');
     const lapak = data.lapak;
+    const namaTampil = lapak ? (lapak.nama || '') : (pg.nama || sesi.nama || '');
+    $('pj-lapak-nama').textContent = namaTampil || 'Lapak Saya';
+    $('pj-ava').textContent = (namaTampil || 'L').trim().charAt(0).toUpperCase() || 'L';
+    $('pj-pemilik').textContent = lapak
+      ? [pg.nama || sesi.nama || '', lapak.tim, lapak.ruangan].filter(Boolean).join(' · ')
+      : 'Belum punya lapak — lengkapi profil di bawah untuk mulai berjualan';
     if (!lapak) {
       $('pj-judul-profil').textContent = 'Buat Profil Lapak';
       $('pj-sub-profil').textContent = 'Kamu belum punya lapak. Lengkapi profil di bawah ini sekali saja supaya bisa mulai berjualan.';
       $('pj-ringkas-profil').style.display = 'none';
       $('form-lapak').style.display = '';
       isiFormLapak(null, pg);
+      $('pj-bungkus-menu').style.display = 'none';
       $('pj-bungkus-produk').style.display = 'none';
       $('pj-bungkus-pesanan').style.display = 'none';
     } else {
@@ -1761,7 +1892,7 @@ async function muatProfil(sesudah){
       const ringkas = $('pj-ringkas-profil');
       ringkas.style.display = '';
       ringkas.innerHTML =
-        '<div class="item"><div class="nm">' + esc(lapak.namaLapak || '') + '</div>' +
+        '<div class="item"><div class="nm">' + esc(lapak.nama || lapak.namaLapak || '') + '</div>' +
         '<div class="info">WhatsApp: ' + esc(waIndo(lapak.noWa) || '–') + '<br>Tim: ' + esc(lapak.tim || '–') + ' · Ruangan: ' + esc(lapak.ruangan || '–') + '<br>Rekening: ' + esc(lapak.noRekening || '–') + '</div>' +
         (lapak.qrisUrl ? '<img class="pratinjau" style="display:block" src="' + esc(lapak.qrisUrl) + '" alt="QRIS lapak">' : '<div class="info">QRIS belum diunggah.</div>') +
         '<div class="aksi"><button type="button" class="btn-kecil" id="pj-ubah-profil">Ubah Profil</button></div></div>';
@@ -1771,6 +1902,7 @@ async function muatProfil(sesudah){
       });
       $('form-lapak').style.display = 'none';
       isiFormLapak(lapak, pg);
+      $('pj-bungkus-menu').style.display = '';
       $('pj-bungkus-produk').style.display = '';
       $('pj-bungkus-pesanan').style.display = '';
       muatProdukSaya();
@@ -1786,7 +1918,7 @@ function isiFormLapak(lapak, pg){
   $('l-qris').value = '';
   const img = $('l-qris-img');
   if (lapak) {
-    $('l-nama').value = lapak.namaLapak || '';
+    $('l-nama').value = lapak.nama || lapak.namaLapak || '';
     $('l-wa').value = waIndo(lapak.noWa);
     $('l-tim').value = lapak.tim || '';
     $('l-ruang').value = lapak.ruangan || '';
@@ -1853,11 +1985,12 @@ function renderProdukSaya(){
     if (p.status !== 'ARSIP') tombolStatus += '<button class="btn-kecil bahaya" data-aksi="ARSIP">Arsipkan</button>';
     tombolStatus += '<button class="btn-kecil bahaya" data-aksi="HAPUS">🗑 Hapus</button>';
     const infoVariasi = (p.variasi && p.variasi.length) ? ' · ' + p.variasi.length + ' variasi' : '';
+    const infoNilai = (p.penilaian && p.penilaian.jumlah) ? '<br>⭐ ' + esc(p.penilaian.rata) + ' dari ' + p.penilaian.jumlah + ' ulasan' : '';
     const hargaInfo = (p.variasi && p.variasi.length) ? hargaTampil(p) : rp(p.harga);
     d.innerHTML =
       '<div class="atas"><div class="mini ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + '</div>' +
       '<div style="flex:1"><div class="nm">' + esc(p.nama) + '</div>' +
-      '<div class="info">' + hargaInfo + ' · ' + esc(p.kategori || '') + ' · ' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + ' · Stok ' + esc(p.stok == null ? '–' : p.stok) + infoVariasi + '</div>' +
+      '<div class="info">' + hargaInfo + ' · ' + esc(p.kategori || '') + ' · ' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + ' · Stok ' + esc(p.stok == null ? '–' : p.stok) + infoVariasi + infoNilai + '</div>' +
       '<span class="lencana-status ' + statusKelas + '">' + esc(p.status || '') + '</span></div></div>' +
       '<div class="aksi"><button class="btn-kecil oranye" data-aksi="UBAH">Ubah</button>' + tombolStatus + '</div>';
     d.querySelectorAll('[data-aksi]').forEach(b => b.addEventListener('click', () => {
@@ -2006,6 +2139,7 @@ async function muatPesananSaya(){
   try {
     const data = await api('pesananSaya', { token: sesi.token });
     const daftar = (data && data.pesanan) || data || [];
+    perbaruiMenuPenjual_(Array.isArray(daftar) ? daftar : []);
     wadah.innerHTML = '';
     if (!Array.isArray(daftar) || !daftar.length) {
       wadah.innerHTML = '<p class="sub">Belum ada pesanan masuk. Pesanan pembeli akan tampil di sini.</p>';
@@ -2272,6 +2406,17 @@ function tombolChatPembeli_(lapak, kode){
     esc(lapak.nama || '') + '" data-kode="' + esc(kode) + '" style="width:100%;margin-top:10px">💬 Chat ' +
     esc(lapak.nama || 'Penjual') + '</button>';
 }
+/* Blok ulasan pada kartu pesanan SELESAI: tombol Beri Ulasan, atau ringkasan
+   ulasan yang sudah terkirim. Untuk kartu grup, nama produk ikut di tombol. */
+function blokUlasanPembeli_(p, denganNama){
+  if (p.ulasan) {
+    return '<div class="sudah-ulasan">Ulasanmu sudah terkirim <span class="bintang-teks">' + bintangTeks_(p.ulasan.bintang) + '</span>' +
+      (p.ulasan.komentar ? '<br>“' + esc(p.ulasan.komentar) + '”' : '') + '</div>';
+  }
+  return '<button class="btn-ulasan ps-beri-ulasan" data-id="' + esc(p.id) + '" data-produk="' +
+    esc(p.namaProduk || '') + '" data-lapak="' + esc((p.lapak || {}).nama || '') + '">⭐ Beri Ulasan' +
+    (denganNama ? ' — ' + esc(p.namaProduk || '') : '') + '</button>';
+}
 function kartuPesananPembeli_(p){
   const lapak = p.lapak || {};
   let html = '<div class="kartu-pantu">';
@@ -2287,6 +2432,7 @@ function kartuPesananPembeli_(p){
       (lapak.ruangan ? ' (' + esc(lapak.ruangan) + ')' : '') + '. Bayar <b>' + rp(p.total) + '</b> saat pengambilan.</div>';
   }
   html += tombolChatPembeli_(lapak, p.id);
+  if (p.status === 'SELESAI') html += blokUlasanPembeli_(p, false);
   html += '</div>';
   return html;
 }
@@ -2311,6 +2457,7 @@ function kartuGrupPembeli_(grup, items){
     html += '<div class="sub-lapak' + (urut === 0 ? ' pertama' : '') + '"><div class="kp-kepala"><b style="font-size:13px">🏪 ' +
       esc(lapak.nama || '—') + '</b>' + lencanaStatusPembeli_(statusGrup) + '</div>';
     grupLapak.forEach(p => { html += barisBarangPembeli_(p); });
+    grupLapak.forEach(p => { if (p.status === 'SELESAI') html += blokUlasanPembeli_(p, true); });
     if (statusGrup === 'SIAP_DIAMBIL') {
       html += '<div class="kotak-siap">✅ Bagian lapak ini sudah siap diambil' +
         (lapak.ruangan ? ' di <b>' + esc(lapak.ruangan) + '</b>' : '') + '.</div>';
@@ -2322,6 +2469,50 @@ function kartuGrupPembeli_(grup, items){
   html += '</div>';
   return html;
 }
+/* ================= Beri ulasan ================= */
+let ulasanAktif = null;
+let bintangPilihan = 0;
+const LABEL_BINTANG = { 1: 'Kecewa', 2: 'Kurang puas', 3: 'Cukup', 4: 'Puas', 5: 'Sangat puas!' };
+function gambarBintangPilihan_(){
+  document.querySelectorAll('#u-bintang span').forEach(s => {
+    s.classList.toggle('nyala', Number(s.dataset.n) <= bintangPilihan);
+  });
+  $('u-ket-bintang').textContent = bintangPilihan ? LABEL_BINTANG[bintangPilihan] : 'Ketuk bintang untuk menilai';
+}
+function bukaUlasan_(idPesanan, namaProduk, namaLapak){
+  ulasanAktif = { idPesanan: idPesanan };
+  bintangPilihan = 0;
+  $('u-produk').textContent = namaProduk || '';
+  $('u-info').textContent = '🏪 ' + (namaLapak || '') + ' · Kode ' + idPesanan;
+  $('u-komentar').value = '';
+  tampilGalat('u-galat', '');
+  gambarBintangPilihan_();
+  bukaLembar('lembar-ulasan');
+}
+document.querySelectorAll('#u-bintang span').forEach(s => s.addEventListener('click', () => {
+  bintangPilihan = Number(s.dataset.n);
+  gambarBintangPilihan_();
+}));
+$('u-kirim').addEventListener('click', async () => {
+  if (!ulasanAktif) return;
+  tampilGalat('u-galat', '');
+  if (!bintangPilihan) { tampilGalat('u-galat', 'Pilih bintang dulu, ya.'); return; }
+  const tombol = $('u-kirim');
+  tombol.disabled = true; tombol.textContent = 'Mengirim…';
+  try {
+    await api('kirimUlasan', { idPesanan: ulasanAktif.idPesanan, bintang: bintangPilihan, komentar: $('u-komentar').value.trim() });
+    toast('Terima kasih! Ulasanmu sudah terkirim.');
+    muatKatalog();
+    try { await tarikPesananSaya(); } catch (e) {}
+    gambarPesananSaya();
+    bukaLembar('lembar-pesanan-saya');
+  } catch (e) {
+    tampilGalat('u-galat', e.message);
+  } finally {
+    tombol.disabled = false; tombol.textContent = 'Kirim Ulasan';
+  }
+});
+
 function gambarPesananSaya(){
   const wadah = $('ps-daftar');
   if (!pesananSayaDimuat) {
@@ -2349,6 +2540,9 @@ function gambarPesananSaya(){
     const pesan = 'Halo ' + (b.dataset.lapak || 'penjual') + ', saya mau menanyakan pesanan saya di LapakKM.\n' +
       'Kode: ' + b.dataset.kode + '\nTerima kasih.';
     window.open(tautanWa(b.dataset.wa, pesan), '_blank');
+  }));
+  wadah.querySelectorAll('.ps-beri-ulasan').forEach(b => b.addEventListener('click', () => {
+    bukaUlasan_(b.dataset.id, b.dataset.produk, b.dataset.lapak);
   }));
   $('ps-sub').textContent = 'Status diambil langsung dari server · diperbarui ' + jamKini_() +
     ' — tutup lalu buka lagi lembar ini untuk menyegarkan.';
