@@ -238,6 +238,12 @@
   .kartu .btn-keranjang:disabled{border-color:#bdbdbd;color:#bdbdbd;cursor:default}
   nav a{position:relative}
   .lencana-nav{position:absolute;top:1px;right:calc(50% - 21px);background:#fff;color:var(--oranye);border:1.5px solid var(--oranye);font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px}
+  /* Sorotan lampu oranye mengikuti tab aktif (disetujui Selby 13 Nov 2026) */
+  #nav-sorot{position:absolute;top:0;left:0;height:100%;pointer-events:none;opacity:0;z-index:0;transition:transform .5s cubic-bezier(.5,0,.2,1.2),width .5s cubic-bezier(.5,0,.2,1.2),opacity .3s}
+  #nav-sorot::before{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:66px;height:80%;background:linear-gradient(rgba(238,77,45,.20),rgba(238,77,45,.02));clip-path:polygon(38% 0,62% 0,97% 100%,3% 100%)}
+  #nav-sorot::after{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:28px;height:3px;border-radius:0 0 4px 4px;background:var(--oranye);box-shadow:0 0 12px 2px rgba(238,77,45,.55)}
+  #nav-sorot .kolam{position:absolute;left:50%;bottom:15px;transform:translateX(-50%);width:47px;height:15px;border-radius:50%;background:radial-gradient(closest-side,rgba(238,77,45,.30),rgba(238,77,45,0))}
+  @media (prefers-reduced-motion:reduce){#nav-sorot{transition:none}}
   .opsi-bayar2{display:flex;align-items:center;gap:10px;border:1.5px solid #e3e3e3;border-radius:8px;padding:11px 12px;cursor:pointer;font-size:14px;min-height:44px}
   .opsi-bayar2 .ic{font-size:20px}
   .opsi-bayar2 small{display:block;color:var(--teks2);font-size:11.5px}
@@ -491,6 +497,7 @@
   </div>
 
   <nav>
+    <span id="nav-sorot" aria-hidden="true"><span class="kolam"></span></span>
     <a href="#" class="aktif" id="nav-beranda"><span class="ic"><svg class="isi" viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8V21a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 21z" transform="scale(0.92) translate(1,0.4)"/></svg></span>Beranda</a>
     <a href="#" id="nav-keranjang"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 3.5h2l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.9a1.6 1.6 0 0 0 1.6-1.3L20.5 7H6"/><circle cx="10" cy="21" r="1.3"/><circle cx="17.5" cy="21" r="1.3"/></svg></span>Keranjang<span class="lencana-nav" id="nav-keranjang-hitung">0</span></a>
     <a href="#" class="jual" id="nav-jual"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></span>Jual</a>
@@ -1918,10 +1925,26 @@ function tampilView(nama){
   $('nav-beranda').classList.toggle('aktif', nama === 'beranda');
   $('nav-penjual').classList.toggle('aktif', nama === 'penjual');
   $('nav-admin').classList.toggle('aktif', nama === 'admin');
+  geserSorotNav_();
   // Ingat halaman terakhir supaya sesudah refresh tidak balik ke beranda.
   try { localStorage.setItem('lapakkmView', nama); } catch (e) {}
   window.scrollTo(0, 0);
 }
+/* Sorotan lampu mengikuti tab aktif: Beranda/Penjual/Admin (Jual tombol aksi,
+   Keranjang & Pesanan Saya berupa lembar di atas nav sehingga tak berpindah). */
+function geserSorotNav_(){
+  var sorot = $('nav-sorot'); if (!sorot) return;
+  var aktif = null;
+  ['nav-beranda', 'nav-penjual', 'nav-admin'].forEach(function(id){
+    var a = $(id);
+    if (a && a.classList.contains('aktif') && a.offsetParent !== null) aktif = a;
+  });
+  if (!aktif) { sorot.style.opacity = '0'; return; }
+  sorot.style.width = aktif.offsetWidth + 'px';
+  sorot.style.transform = 'translateX(' + aktif.offsetLeft + 'px)';
+  sorot.style.opacity = '1';
+}
+window.addEventListener('resize', geserSorotNav_);
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => tampilView(b.dataset.nav)));
 $('nav-beranda').addEventListener('click', e => { e.preventDefault(); tampilView('beranda'); });
 $('nav-penjual').addEventListener('click', e => { e.preventDefault(); bukaPenjual(); });
@@ -2954,6 +2977,7 @@ segarkanUiSesi();
   if (v === 'penjual' && sesi) bukaPenjual();
   else if (v === 'admin' && sesi && sesi.peran === 'ADMIN') bukaAdmin();
 })();
+geserSorotNav_();   // posisi awal sorotan (Beranda dari markup bila tak ada view pulih)
 muatKatalog();
 segarkanInfoPill_();
 if (kodePesananTersimpan().length) tarikPesananSaya().catch(() => {});
