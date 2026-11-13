@@ -407,6 +407,7 @@
         <button class="mi" data-menu="pesanan"><span class="ki" style="background:#fdf3e0">🧾</span><div class="ml">Pesanan Masuk</div><span class="bdg" id="mp-lencana" style="display:none">0</span></button>
         <button class="mi" data-menu="profil"><span class="ki" style="background:#e3f6f2">🏪</span><div class="ml">Profil Lapak</div></button>
         <button class="mi" data-menu="toko"><span class="ki" style="background:#e8f1fe">👁️</span><div class="ml">Halaman Toko</div></button>
+        <button class="mi" data-menu="bagikan"><span class="ki" style="background:#ffe9e4">🔗</span><div class="ml">Bagikan Toko</div></button>
         <button class="mi" data-menu="tambah"><span class="ki" style="background:#f3e8fd">➕</span><div class="ml">Tambah Jualan</div></button>
       </div>
     </div>
@@ -589,6 +590,7 @@
   </div>
   <div class="tombol-bawah">
     <button class="btn oranye" id="t-chat">💬 Chat Penjual</button>
+    <button class="btn" id="t-bagikan" style="flex:0 0 118px;background:#fff;color:var(--oranye);border:1.5px solid var(--oranye)">🔗 Bagikan</button>
   </div>
 </div>
 
@@ -1284,6 +1286,27 @@ $('d-order').addEventListener('click', () => { if (produkAktif) bukaOrder(produk
    Menampilkan seluruh jualan yang tayang dari satu lapak. Datanya diambil dari
    katalog yang sudah termuat (semuaProduk), jadi terbuka seketika juga. */
 let tokoAktif = null;
+/* ---------- Bagikan tautan toko (?lapak=<ID>) ---------- */
+function tautanToko_(idLapak){
+  return location.origin + location.pathname + '?lapak=' + encodeURIComponent(idLapak);
+}
+async function bagikanToko_(l){
+  if (!l || !l.id) { toast('Info toko tidak tersedia.'); return; }
+  const tautan = tautanToko_(l.id);
+  const teks = '🏪 ' + (l.nama || 'Toko Penjual') + ' di LapakKM — lihat jualannya di sini:';
+  if (navigator.share) {
+    try { await navigator.share({ title: 'LapakKM — ' + (l.nama || 'Toko'), text: teks, url: tautan }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(tautan);
+    toast('Tautan toko tersalin — tempel di WA/status untuk membagikan.');
+  } catch (e) {
+    window.open('https://wa.me/?text=' + encodeURIComponent(teks + ' ' + tautan), '_blank');
+  }
+}
+$('t-bagikan').addEventListener('click', () => { if (tokoAktif) bagikanToko_(tokoAktif); });
+
 function bukaToko(lapakLangsung){
   const l = (lapakLangsung && lapakLangsung.id) ? lapakLangsung
     : (produkAktif && (produkAktif.lapakDetail || produkAktif.lapak)) || null;
@@ -1361,6 +1384,11 @@ document.querySelectorAll('#pj-bungkus-menu .mi').forEach(b => b.addEventListene
     const lk = (profilCache && profilCache.lapak) || null;
     if (!lk || !lk.id) { toast('Profil lapak belum lengkap.'); return; }
     bukaToko({ id: lk.id, nama: lk.nama, tim: lk.tim, ruangan: lk.ruangan, noWa: lk.noWa, fotoUrl: lk.fotoUrl });
+  }
+  else if (menu === 'bagikan') {
+    const lk = (profilCache && profilCache.lapak) || null;
+    if (!lk || !lk.id) { toast('Profil lapak belum lengkap.'); return; }
+    bagikanToko_({ id: lk.id, nama: lk.nama });
   }
 }));
 $('pj-kartu-id').addEventListener('click', () => aturSubPenjual('profil'));
@@ -2984,6 +3012,31 @@ if (kodePesananTersimpan().length) tarikPesananSaya().catch(() => {});
 (function () {
   const idDiminta = new URLSearchParams(location.search).get('produk');
   if (idDiminta) bukaDetail(idDiminta);
+})();
+(function () {
+  // Tautan bagikan toko: ?lapak=<ID_Lapak> membuka halaman toko itu langsung.
+  const idLapak = new URLSearchParams(location.search).get('lapak');
+  if (!idLapak) return;
+  let selesai = false;
+  const tunggu = setInterval(() => {
+    if (selesai || !katalogSiap) return;
+    selesai = true; clearInterval(tunggu);
+    const p = semuaProduk.find(x => x.lapak && x.lapak.id === idLapak);
+    if (!p) { toast('Toko tidak ditemukan atau belum ada jualan yang tayang.'); return; }
+    const l = p.lapak;
+    bukaToko({ id: l.id, nama: l.nama, tim: l.tim, ruangan: l.ruangan, fotoUrl: l.fotoUrl });
+    // Katalog publik tidak memuat nomor WA; lengkapi dari detail supaya
+    // tombol Chat Penjual ikut tampil di halaman toko dari tautan bagikan.
+    api('detail', { idProduk: p.id }).then(d => {
+      if (d && d.lapak && d.lapak.noWa && tokoAktif && tokoAktif.id === idLapak) {
+        tokoAktif.noWa = d.lapak.noWa;
+        const tc = $('t-chat');
+        tc.style.display = '';
+        tc.onclick = () => window.open(tautanWa(d.lapak.noWa, 'Halo ' + (d.lapak.nama || 'penjual') + ', saya melihat toko Anda di LapakKM.'), '_blank');
+      }
+    }).catch(() => {});
+  }, 300);
+  setTimeout(() => { selesai = true; clearInterval(tunggu); }, 20000);
 })();
 </script>
 <script>
