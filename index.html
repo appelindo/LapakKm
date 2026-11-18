@@ -1366,7 +1366,9 @@ function gambarPenilaian_(p, ulasan){
   el.innerHTML = html;
 }
 function isiDetail_(p, l, ulasan){
+    const pilihanLama = (produkAktif && p && produkAktif.id === p.id) ? (produkAktif.pilihanVariasi || '') : '';
     produkAktif = Object.assign({}, p, { lapakDetail: l });
+    if (pilihanLama) produkAktif.pilihanVariasi = pilihanLama;
     const wadahFoto = $('d-foto');
     wadahFoto.className = 'foto-besar ' + kelasWarna(p.nama);
     wadahFoto.innerHTML = fotoHtml(p.fotoUrl, p.nama);
@@ -1375,16 +1377,37 @@ function isiDetail_(p, l, ulasan){
     const kotakVariasi = $('d-variasi');
     const daftarVariasi = variasiProduk(p);
     if (daftarVariasi.length) {
+      /* Chip variasi di detail adalah PEMILIH sungguhan (perbaikan 18 Nov
+         2026): pilihan tersimpan di produkAktif.pilihanVariasi dan dibawa
+         ke lembar order / tambah keranjang. Sebelumnya chip hanya menukar
+         foto, jadi pesanan selalu memakai pilihan bawaan lembar order
+         (variasi pertama yang tersedia) walau pembeli sudah memilih di
+         detail: itulah keluhan "apa pun variasi yang dipilih, yang masuk
+         ke pesanan penjual selalu pilihan pertama". */
       kotakVariasi.innerHTML = '<div class="sub" style="font-weight:700;margin:10px 0 6px">Pilihan Variasi</div><div class="chip-variasi">' +
-        daftarVariasi.map(v => v.fotoUrl
-          ? '<button type="button" class="chip-info chip-var" data-foto-var="' + esc(v.fotoUrl) + '"><img class="vimg" src="' + esc(v.fotoUrl) + '" alt="">' + esc(v.nama) + '<b>' + rp(v.harga) + labelStokVariasi_(v) + '</b></button>'
-          : '<span class="chip-info">' + esc(v.nama) + '<b>' + rp(v.harga) + labelStokVariasi_(v) + '</b></span>').join('') + '</div>';
-      kotakVariasi.querySelectorAll('[data-foto-var]').forEach(btn => btn.addEventListener('click', () => {
-        const sedangAktif = btn.classList.contains('aktif');
-        kotakVariasi.querySelectorAll('[data-foto-var]').forEach(b => b.classList.remove('aktif'));
-        if (sedangAktif) wadahFoto.innerHTML = fotoHtml(p.fotoUrl, p.nama);
-        else { btn.classList.add('aktif'); wadahFoto.innerHTML = fotoHtml(btn.dataset.fotoVar, p.nama); }
+        daftarVariasi.map((v, i) => {
+          const mati = stokVariasiTerlacak_(v) && Number(v.stok) <= 0;
+          return '<button type="button" class="chip-info chip-var" data-idx="' + i + '"' + (mati ? ' disabled' : '') + '>' +
+            (v.fotoUrl ? '<img class="vimg" src="' + esc(v.fotoUrl) + '" alt="">' : '') +
+            esc(v.nama) + '<b>' + rp(v.harga) + labelStokVariasi_(v) + '</b></button>';
+        }).join('') + '</div>';
+      kotakVariasi.querySelectorAll('[data-idx]').forEach(btn => btn.addEventListener('click', () => {
+        const v = daftarVariasi[Number(btn.dataset.idx)];
+        if (!v) return;
+        produkAktif.pilihanVariasi = v.nama;
+        kotakVariasi.querySelectorAll('[data-idx]').forEach(b => b.classList.toggle('aktif', b === btn));
+        wadahFoto.innerHTML = fotoHtml(v.fotoUrl || p.fotoUrl, p.nama);
       }));
+      if (produkAktif.pilihanVariasi) {
+        const idxP = daftarVariasi.findIndex(v => v.nama === produkAktif.pilihanVariasi && !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0));
+        if (idxP >= 0) {
+          const btnP = kotakVariasi.querySelector('[data-idx="' + idxP + '"]');
+          if (btnP) btnP.classList.add('aktif');
+          if (daftarVariasi[idxP].fotoUrl) wadahFoto.innerHTML = fotoHtml(daftarVariasi[idxP].fotoUrl, p.nama);
+        } else {
+          produkAktif.pilihanVariasi = '';
+        }
+      }
       kotakVariasi.style.display = '';
     } else {
       kotakVariasi.innerHTML = '';
@@ -1691,7 +1714,9 @@ function bukaOrder(p){
       b.addEventListener('click', () => pilihVariasi(v, b));
       wadahVar.appendChild(b);
     });
-    const idxAwal = Math.max(0, daftarVar.findIndex(v => !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)));
+    let idxAwal = Math.max(0, daftarVar.findIndex(v => !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)));
+    const idxPilihan = p.pilihanVariasi ? daftarVar.findIndex(v => v.nama === p.pilihanVariasi && !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)) : -1;
+    if (idxPilihan >= 0) idxAwal = idxPilihan;
     pilihVariasi(daftarVar[idxAwal], wadahVar.children[idxAwal]);
   } else {
     grupVar.style.display = 'none';
@@ -1880,7 +1905,9 @@ function bukaTambahKeranjang(p){
       b.addEventListener('click', () => pilihVariasiTambah(v, b));
       wadahVar.appendChild(b);
     });
-    const idxAwal = Math.max(0, daftarVar.findIndex(v => !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)));
+    let idxAwal = Math.max(0, daftarVar.findIndex(v => !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)));
+    const idxPilihan = p.pilihanVariasi ? daftarVar.findIndex(v => v.nama === p.pilihanVariasi && !(stokVariasiTerlacak_(v) && Number(v.stok) <= 0)) : -1;
+    if (idxPilihan >= 0) idxAwal = idxPilihan;
     pilihVariasiTambah(daftarVar[idxAwal], wadahVar.children[idxAwal]);
   } else {
     grupVar.style.display = 'none';
