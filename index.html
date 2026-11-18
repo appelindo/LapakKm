@@ -1113,6 +1113,68 @@ async function muatKatalog(){
     $('katalog-status').textContent = 'Maaf, katalog belum bisa dimuat. ' + e.message;
   }
 }
+/* ================= Refresh otomatis =================
+   Katalog disegarkan di latar tiap 30 detik dan setiap kali halaman
+   kembali terlihat (pindah aplikasi/tab atau lepas kunci layar), supaya
+   pembeli tidak lagi melihat jualan basi dan pesanan baru penjual
+   muncul sendiri. Data hanya digambar ulang bila benar-benar berubah,
+   dan gambar ulang ditunda selama ada lembar terbuka (detail produk,
+   keranjang, formulir pesan) atau pengguna sedang mengetik. */
+let tandaRender_ = '';
+let segarBerjalan_ = false;
+let segarTerakhir_ = 0;
+let segarPesananBerjalan_ = false;
+function tandaKatalog_(daftar){
+  try { return JSON.stringify(daftar || []); } catch (e) { return ''; }
+}
+function gambarUlangBilaAman_(){
+  if (!semuaProduk.length) return;
+  if (tandaRender_ === tandaKatalog_(semuaProduk)) return;
+  if (document.querySelector('.lembar.buka')) return;
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) return;
+  renderKatalog();
+}
+function segarkanOtomatis_(){
+  if (document.hidden || segarBerjalan_) return;
+  const kini = Date.now();
+  if (kini - segarTerakhir_ < 5000) return;
+  segarTerakhir_ = kini;
+  segarBerjalan_ = true;
+  api('katalog').then(data => {
+    const produkBaru = (data && data.produk) || [];
+    if (tandaKatalog_(produkBaru) !== tandaKatalog_(semuaProduk)) {
+      semuaProduk = produkBaru;
+      katalogSiap = true;
+    }
+    // Selalu coba gambar ulang: bila gambar ulang sebelumnya tertunda
+    // (lembar terbuka / sedang mengetik), tanda tampil masih tertinggal
+    // dan di sinilah ia disusul, tanpa menunggu ada data baru lagi.
+    gambarUlangBilaAman_();
+  }).catch(() => {}).then(() => {
+    segarBerjalan_ = false;
+    if (sesi) segarkanPesananPenjual_();
+  });
+}
+function segarkanPesananPenjual_(){
+  if (!sesi || segarPesananBerjalan_) return;
+  segarPesananBerjalan_ = true;
+  api('pesananSaya', { token: sesi.token }).then(data => {
+    const daftar = (data && data.pesanan) || data || [];
+    if (!Array.isArray(daftar)) return;
+    perbaruiMenuPenjual_(daftar);
+    // Penjual sedang membuka halaman Pesanan: segarkan juga daftarnya,
+    // kecuali ada lembar atau formulir di atasnya.
+    if (subPenjualAktif === 'pesanan' && !document.querySelector('.lembar.buka')) muatPesananSaya();
+  }).catch(() => {}).then(() => { segarPesananBerjalan_ = false; });
+}
+setInterval(segarkanOtomatis_, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) segarkanOtomatis_(); });
+window.addEventListener('pageshow', e => { if (e.persisted) segarkanOtomatis_(); });
+window.addEventListener('focus', segarkanOtomatis_);
+document.addEventListener('focusout', () => setTimeout(gambarUlangBilaAman_, 150));
+$('nav-beranda').addEventListener('click', () => setTimeout(gambarUlangBilaAman_, 60));
+
 function cocokFilter(p){
   if (kategoriAktif !== 'Semua' && p.kategori !== kategoriAktif) return false;
   if (kataCari) {
@@ -1216,6 +1278,7 @@ function mulaiAnimasiPo_(){
   poAnimasiId = requestAnimationFrame(langkah);
 }
 function renderKatalog(){
+  tandaRender_ = tandaKatalog_(semuaProduk);
   const hasil = semuaProduk.filter(cocokFilter);
   /* Bagian PO */
   const po = hasil.filter(p => p.mode === 'PO');
