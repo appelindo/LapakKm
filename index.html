@@ -2600,15 +2600,33 @@ function renderProdukSaya(){
       '<div style="flex:1"><div class="nm">' + esc(p.nama) + '</div>' +
       '<div class="info">' + hargaInfo + ' · ' + esc(p.kategori || '') + ' · ' + (p.mode === 'PO' ? 'Pre-Order' : 'Ready') + ' · Stok ' + esc(p.stok == null ? '–' : p.stok) + ' · Terjual ' + (Number(p.terjual) || 0) + infoVariasi + infoNilai + '</div>' +
       '<span class="lencana-status ' + statusKelas + '">' + esc(p.status || '') + '</span></div></div>' +
-      '<div class="aksi"><button class="btn-kecil oranye" data-aksi="UBAH">Ubah</button>' + tombolStatus + '</div>';
+      '<div class="aksi">' + (p.status !== 'ARSIP' ? '<button class="btn-kecil" data-aksi="BAGIKAN">🔗 Bagikan</button>' : '') + '<button class="btn-kecil oranye" data-aksi="UBAH">Ubah</button>' + tombolStatus + '</div>';
     d.querySelectorAll('[data-aksi]').forEach(b => b.addEventListener('click', () => {
       const aksi = b.dataset.aksi;
       if (aksi === 'UBAH') bukaFormProduk(p);
+      else if (aksi === 'BAGIKAN') bagikanProduk(p);
       else if (aksi === 'HAPUS') hapusProdukDuaTahap(p, b);
       else ubahStatusProduk(p.id, aksi);
     }));
+    const atas = d.querySelector('.atas');
+    atas.style.cursor = 'pointer';
+    atas.title = 'Ketuk untuk pratinjau';
+    atas.addEventListener('click', () => pratinjauProdukSaya(p));
     wadah.appendChild(d);
   });
+}
+/* Pratinjau produk dari menu penjual (permintaan Selby 19 Nov 2026: produk
+   di daftar Produk Saya bisa diklik untuk pratinjau). Produk TAYANG/HABIS
+   memakai jalur detail pembeli biasa. Produk ARSIP tidak dilayani API
+   detail publik, jadi ditampilkan dari data produkSaya yang sudah lengkap
+   (nama, harga, variasi, stok, deskripsi) dengan tombol order dimatikan. */
+function pratinjauProdukSaya(p){
+  if (p.status !== 'ARSIP') { bukaDetail(p.id); return; }
+  isiDetail_(p, { nama: p.namaLapak || '' });
+  const tombolOrder = $('d-order');
+  tombolOrder.disabled = true;
+  tombolOrder.textContent = 'Produk Diarsipkan';
+  bukaLembar('lembar-detail');
 }
 /* Hapus produk: dua ketukan supaya tidak salah tekan. Ketukan pertama mengubah
    tombol jadi permintaan yakin; ketukan kedua dalam 3,5 detik benar-benar menghapus. */
