@@ -966,6 +966,95 @@ function normalWa(no){
 function tautanWa(no, teks){
   return 'https://wa.me/' + normalWa(no) + '?text=' + encodeURIComponent(teks);
 }
+
+/* ================= Nota struk WhatsApp =================
+   Pesan WA pesanan berbentuk nota monospace (blok ```) supaya tampil seperti
+   struk asli di WhatsApp: kolom harga rata kanan. Sapaan & penutup di luar
+   blok. LapakKM tidak punya StatusBayar: nota transfer selalu "menunggu
+   pembayaran" + rekening lapak penjualnya. */
+function angkaNota_(n){ return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function tanggalNotaHariIni_(){
+  const b = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const t = new Date();
+  return t.getDate() + ' ' + b[t.getMonth()] + ' ' + t.getFullYear();
+}
+function teksNotaStruk_(k){
+  const L = 32, garis = '-'.repeat(L);
+  const tengah = x => { x = String(x == null ? '' : x); const sisa = L - x.length; return sisa > 0 ? ' '.repeat(Math.floor(sisa / 2)) + x : x; };
+  const rataKanan = (kiri, nilai) => {
+    kiri = String(kiri); nilai = String(nilai);
+    const spasi = L - kiri.length - nilai.length;
+    return spasi > 0 ? kiri + ' '.repeat(spasi) + nilai : kiri + ' ' + nilai;
+  };
+  const b = [];
+  b.push(tengah(String(k.toko || '').toUpperCase()));
+  (k.slogan || []).forEach(x => b.push(tengah(x)));
+  b.push(garis);
+  b.push('No. Pesanan : ' + (k.kode || '-'));
+  if (k.tanggal) b.push('Tanggal     : ' + k.tanggal);
+  if (k.pembeli) b.push('Pembeli     : ' + k.pembeli);
+  b.push(garis);
+  (k.items || []).forEach(it => {
+    b.push(String(it.nama || '') + (it.variasi ? ' (' + it.variasi + ')' : ''));
+    b.push(rataKanan('  ' + (it.jumlah == null ? 1 : it.jumlah) + ' x ' + angkaNota_(it.harga), angkaNota_(it.total)));
+  });
+  b.push(garis);
+  b.push(rataKanan('TOTAL', angkaNota_(k.total)));
+  b.push(garis);
+  const m = String(k.metode || '').toUpperCase();
+  if (m === 'TRANSFER') {
+    b.push('Pembayaran : Transfer');
+    b.push('Status     : Menunggu pembayaran');
+    if (k.rekening) { b.push(''); b.push('Transfer ke:'); b.push(String(k.rekening)); }
+  } else if (m === 'QRIS') {
+    b.push('Pembayaran : QRIS');
+    b.push('Status     : Menunggu pembayaran');
+  } else if (m === 'COD' || m === 'TUNAI') {
+    b.push('Pembayaran : ' + (m === 'COD' ? 'COD' : 'Tunai'));
+    b.push('Bayar di tempat saat pengambilan');
+  } else if (m) {
+    b.push('Pembayaran : ' + m);
+  }
+  b.push('Pengambilan: Di tempat');
+  return '```\n' + b.join('\n') + '\n```';
+}
+function pesanNotaWa_(k){
+  const m = String(k.metode || '').toUpperCase();
+  const belumBayar = (m === 'TRANSFER' || m === 'QRIS');
+  let buka, tutup;
+  if (k.arah === 'penjual') {
+    buka = 'Halo ' + (k.pembeli || 'kak') + ', ini nota pesananmu di ' + (k.toko || '') + ':';
+    tutup = m === 'TRANSFER' ? 'Silakan transfer ke rekening di nota, lalu kirim bukti transfernya lewat chat ini ya.'
+      : m === 'QRIS' ? 'Silakan bayar lewat QRIS, lalu kirim bukti bayarnya lewat chat ini ya.'
+      : 'Sampai jumpa saat pengambilan ya.';
+  } else {
+    buka = 'Halo ' + (k.toko || 'penjual') + ', ini nota pesanan saya:';
+    tutup = belumBayar ? 'Saya bayar sekarang, bukti bayarnya saya kirim di chat ini.'
+      : 'Ditunggu konfirmasinya, terima kasih.';
+  }
+  return buka + '\n\n' + teksNotaStruk_(k) + '\n\n' + tutup;
+}
+function pesanSiapDiambil_(items){
+  const pertama = items[0] || {};
+  const total = items.reduce((s2, o) => s2 + (Number(o.total) || 0), 0);
+  const isi = items.map(o => (o.namaProduk || '') + ' \u00d7' + (o.jumlah == null ? 1 : o.jumlah)).join(', ');
+  const toko = (profilCache && profilCache.lapak && profilCache.lapak.nama) || 'LapakKM';
+  let bayarTeks;
+  if (pertama.metode === 'TUNAI') bayarTeks = 'Pembayaran: siapkan uang pas *' + rp(total) + '* ya.';
+  else bayarTeks = 'Pembayaran: *' + rp(total) + '* (' + (LABEL_BAYAR[pertama.metode] || pertama.metode || '') + ').';
+  return 'Halo ' + (pertama.namaPembeli || 'kak') + ', pesananmu di *' + toko + '* sudah siap diambil \u{1F389}\n\n' +
+    'No. Pesanan: ' + (pertama.grup || pertama.idPesanan || pertama.id || '-') + '\nIsi: ' + isi + '\n' + bayarTeks +
+    '\n\nSilakan diambil di tempat. Terima kasih!';
+}
+function pesanTerimaKasih_(items, toko){
+  const pertama = items[0] || {};
+  const kode = pertama.grup || pertama.idPesanan || pertama.id || '';
+  return 'Halo ' + (pertama.namaPembeli || 'kak') + ', terima kasih sudah belanja di *' + (toko || 'LapakKM') + '* \u{1F64F}\n\n' +
+    'Pesanan ' + kode + ' sudah selesai. Semoga berkenan dengan pesanannya!\n\n' +
+    'Bantu beri penilaian ya, tinggal klik tautan ini lalu pilih bintangnya:\n' +
+    'https://appelindo.github.io/LapakKm/?pesanan=' + kode + '\n\nDitunggu order berikutnya!';
+}
+
 async function salinTeks(teks){
   try { await navigator.clipboard.writeText(teks); return true; }
   catch (e) {
@@ -1929,7 +2018,7 @@ function tampilKonfirmasi(data, ktx){
   const kotak = $('k-info-bayar');
   if (ktx.metode === 'TRANSFER') {
     kotak.innerHTML = '<h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4l8.5 5.5"/><path d="M5 10v7.5M9.3 10v7.5M14.7 10v7.5M19 10v7.5"/><path d="M3.5 20.5h17M3.5 17.5h17"/></svg> Transfer ke Penjual</h4>' +
-      '<p>Transfer sebesar <b>' + rp(data.total) + '</b> ke nomor rekening berikut <b>sesudah penjual mengonfirmasi</b> pesananmu, lalu kirim bukti transfer lewat WhatsApp.</p>' +
+      '<p>Transfer sebesar <b>' + rp(data.total) + '</b> ke nomor rekening berikut, lalu kirim bukti transfernya lewat WhatsApp. Tombol Selesai di bawah membuka chat penjual dengan nota pesananmu.</p>' +
       '<div class="rek">' + esc(lapak.noRekening || 'Belum diisi') + '</div>' +
       '<button class="btn-salin" id="k-salin">Salin Nomor Rekening</button>';
     const tombolSalin = $('k-salin');
@@ -1941,21 +2030,19 @@ function tampilKonfirmasi(data, ktx){
     if (lapak.qrisUrl) {
       kotak.innerHTML = '<h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg> Bayar dengan QRIS</h4><div class="qris-tampil">' +
         '<img src="' + esc(lapak.qrisUrl) + '" alt="QRIS penjual">' +
-        '<span>QRIS a.n. <b>' + esc(lapak.nama || '') + '</b><br>Scan dengan aplikasi bank / e-wallet apa pun, nominal <b>' + rp(data.total) + '</b>, sesudah penjual mengonfirmasi.</span></div>';
+        '<span>QRIS a.n. <b>' + esc(lapak.nama || '') + '</b><br>Scan dengan aplikasi bank / e-wallet apa pun, nominal <b>' + rp(data.total) + '</b>. Kirim bukti bayarnya lewat WhatsApp sesudah membayar.</span></div>';
     } else {
       kotak.innerHTML = '<h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg> Bayar dengan QRIS</h4><p>Penjual belum mengunggah gambar QRIS. Silakan chat penjual untuk meminta kode QRIS-nya, ya.</p>';
     }
   } else {
-    kotak.innerHTML = '<h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.7"/><path d="M6 9.5h.01M18 14.5h.01"/></svg> Pembayaran Tunai</h4><p>Siapkan uang pas sebesar <b>' + rp(data.total) + '</b>, bayar langsung ke <b>' + esc(lapak.nama || 'penjual') + '</b> saat barang diambil, sesudah penjual mengonfirmasi pesananmu.</p>';
+    kotak.innerHTML = '<h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.7"/><path d="M6 9.5h.01M18 14.5h.01"/></svg> Pembayaran Tunai</h4><p>Siapkan uang pas sebesar <b>' + rp(data.total) + '</b>, bayar langsung ke <b>' + esc(lapak.nama || 'penjual') + '</b> saat barang diambil.</p>';
   }
-  const pesan = 'Halo ' + (lapak.nama || 'penjual') + ', saya baru saja order lewat LapakKM.\n' +
-    'Kode pesanan: ' + (data.idPesanan || '-') + '\n' +
-    'Barang: ' + (p.nama || '-') + '\n' +
-    (ktx.variasi ? 'Variasi: ' + ktx.variasi + '\n' : '') +
-    'Jumlah: ' + ktx.jumlah + '\n' +
-    'Total: ' + rp(data.total) + '\n' +
-    'Pembayaran: ' + (LABEL_BAYAR[ktx.metode] || ktx.metode) + '\n' +
-    'Mohon konfirmasinya, terima kasih.';
+  const pesan = pesanNotaWa_({
+    arah: 'pembeli', toko: lapak.nama || 'LapakKM', slogan: ['via LapakKM'],
+    kode: data.idPesanan || '-', tanggal: tanggalNotaHariIni_(),
+    items: [{ nama: p.nama || '', variasi: ktx.variasi || '', jumlah: ktx.jumlah, harga: Math.round((Number(data.total) || 0) / (ktx.jumlah || 1)), total: data.total || 0 }],
+    total: data.total || 0, metode: ktx.metode, rekening: lapak.noRekening || ''
+  });
   $('k-chat').onclick = () => { window.open(tautanWa(lapak.noWa, pesan), '_blank'); };
   // Tombol Selesai SEKALIGUS membuka WA penjual (pesan yang sama seperti
   // tombol Chat Penjual), baru menutup lembar, pemberitahuan WhatsApp ke
@@ -2263,10 +2350,12 @@ $('co-kirim').addEventListener('click', async () => {
 });
 function pesanGrup_(g, grupKode, metode){
   const lapak = g.lapak || {};
-  let pesan = 'Halo ' + (lapak.nama || g.namaLapak) + ', saya baru checkout lewat LapakKM.\nGrup checkout: ' + grupKode + '\n';
-  g.pesanan.forEach(ps => { pesan += '- ' + ps.nama + (ps.variasi ? ' (' + ps.variasi + ')' : '') + ' × ' + ps.jumlah + ' (' + ps.kode + ')\n'; });
-  pesan += 'Total: ' + rp(g.total) + '\nPembayaran: ' + (LABEL_BAYAR[metode] || metode) + '\nMohon konfirmasinya, terima kasih.';
-  return pesan;
+  return pesanNotaWa_({
+    arah: 'pembeli', toko: lapak.nama || g.namaLapak || 'LapakKM', slogan: ['via LapakKM'],
+    kode: grupKode, tanggal: tanggalNotaHariIni_(),
+    items: g.pesanan.map(ps => ({ nama: ps.nama || '', variasi: ps.variasi || '', jumlah: ps.jumlah, harga: Math.round((Number(ps.total) || 0) / (ps.jumlah || 1)), total: ps.total || 0 })),
+    total: g.total || 0, metode: metode, rekening: lapak.noRekening || ''
+  });
 }
 function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
   simpanKodePesanan(grupKode); // riwayat pembeli: kode grup menempel di HP ini
@@ -2282,13 +2371,13 @@ function tampilKonfirmasiKeranjang(hasil, grupKode, metode, gagalItem){
     });
     html += '</div>';
     if (metode === 'TRANSFER') {
-      html += '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4l8.5 5.5"/><path d="M5 10v7.5M9.3 10v7.5M14.7 10v7.5M19 10v7.5"/><path d="M3.5 20.5h17M3.5 17.5h17"/></svg> Transfer ke ' + esc(g.namaLapak) + '</h4><p>Transfer sebesar <b>' + rp(g.total) + '</b> ke rekening berikut sesudah penjual mengonfirmasi pesananmu:</p><div class="rek">' + esc(lapak.noRekening || 'Belum diisi') + '</div><button class="btn-salin" data-salin="' + esc(lapak.noRekening || '') + '">Salin Nomor Rekening</button></div>';
+      html += '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 12 4l8.5 5.5"/><path d="M5 10v7.5M9.3 10v7.5M14.7 10v7.5M19 10v7.5"/><path d="M3.5 20.5h17M3.5 17.5h17"/></svg> Transfer ke ' + esc(g.namaLapak) + '</h4><p>Transfer sebesar <b>' + rp(g.total) + '</b> ke rekening berikut:</p><div class="rek">' + esc(lapak.noRekening || 'Belum diisi') + '</div><button class="btn-salin" data-salin="' + esc(lapak.noRekening || '') + '">Salin Nomor Rekening</button></div>';
     } else if (metode === 'QRIS') {
       html += lapak.qrisUrl
-        ? '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg> QRIS ' + esc(g.namaLapak) + '</h4><div class="qris-tampil"><img src="' + esc(lapak.qrisUrl) + '" alt="QRIS penjual"><span>Scan kode di atas dengan nominal <b>' + rp(g.total) + '</b> sesudah penjual mengonfirmasi pesananmu.</span></div></div>'
+        ? '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg> QRIS ' + esc(g.namaLapak) + '</h4><div class="qris-tampil"><img src="' + esc(lapak.qrisUrl) + '" alt="QRIS penjual"><span>Scan kode di atas dengan nominal <b>' + rp(g.total) + '</b>. Kirim bukti bayarnya lewat WhatsApp sesudah membayar.</span></div></div>'
         : '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg> QRIS ' + esc(g.namaLapak) + '</h4><p>Penjual belum mengunggah gambar QRIS. Chat penjualnya untuk meminta kode QRIS.</p></div>';
     } else {
-      html += '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.7"/><path d="M6 9.5h.01M18 14.5h.01"/></svg> Tunai: ' + esc(g.namaLapak) + '</h4><p>Bayar <b>' + rp(g.total) + '</b> langsung ke penjual saat pengambilan, sesudah pesananmu dikonfirmasi.</p></div>';
+      html += '<div class="kotak"><h4><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.7"/><path d="M6 9.5h.01M18 14.5h.01"/></svg> Tunai: ' + esc(g.namaLapak) + '</h4><p>Bayar <b>' + rp(g.total) + '</b> langsung ke penjual saat pengambilan.</p></div>';
     }
     html += '<div style="padding:10px 16px 0"><button class="btn wa kk-chat" data-lapak="' + esc(k) + '" style="width:100%"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.5-5.4A8.5 8.5 0 1 1 21 11.5Z"/></svg> Chat ' + esc(g.namaLapak) + '</button></div>';
   });
@@ -2951,19 +3040,33 @@ function kartuGrupPesanan_(items){
   html += '<div class="kgp-total"><span>Total ' + totalQty + ' produk</span><b>' + rp(totalHarga) + '</b></div>';
   html += '<div class="aksi">' +
     (pertama.noWa ? '<button class="btn-kecil" data-chat="1"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.5-5.4A8.5 8.5 0 1 1 21 11.5Z"/></svg> Chat Pembeli</button>' : '') +
+    (statusGrup === 'SIAP_DIAMBIL' && pertama.noWa ? '<button class="btn-kecil wa" data-wa-siap="1">📲 Kabari Siap Diambil</button>' : '') +
+    (statusGrup === 'SELESAI' && pertama.noWa ? '<button class="btn-kecil wa" data-wa-terima="1">💬 Terima Kasih</button>' : '') +
     (langkah ? '<button class="btn-kecil hijau" data-langkah="1">' + langkah.label + (items.length > 1 ? ' Semua' : '') + '</button>' : '') +
     '</div>';
   d.innerHTML = html;
   const tombolChat = d.querySelector('[data-chat]');
   if (tombolChat) tombolChat.addEventListener('click', () => {
-    const namaLapakSaya = (profilCache && profilCache.lapak && profilCache.lapak.nama) || 'penjual LapakKM';
-    let pesan = 'Halo ' + (pertama.namaPembeli || 'kak') + ', saya dari ' + namaLapakSaya + ' (LapakKM).\n';
-    items.forEach(o => {
-      pesan += '- ' + (o.namaProduk || '') + (o.variasi ? ' (' + o.variasi + ')' : '') +
-        ' × ' + (o.jumlah == null ? 1 : o.jumlah) + ' · ' + rp(o.total) + '\n';
+    const lapakSaya = (profilCache && profilCache.lapak) || {};
+    const itemNota = items.filter(o => o.status !== 'BATAL');
+    const pesan = pesanNotaWa_({
+      arah: 'penjual', toko: lapakSaya.nama || 'LapakKM', slogan: ['via LapakKM'],
+      kode: pertama.grup || pertama.idPesanan || pertama.id || '-',
+      tanggal: pertama.waktu ? formatWaktuPesanan_(pertama.waktu) : '',
+      pembeli: pertama.namaPembeli || '',
+      items: itemNota.map(o => ({ nama: o.namaProduk || '', variasi: o.variasi || '', jumlah: o.jumlah == null ? 1 : o.jumlah, harga: o.hargaSatuan || Math.round((Number(o.total) || 0) / (o.jumlah || 1)), total: o.total || 0 })),
+      total: itemNota.reduce((s2, o) => s2 + (Number(o.total) || 0), 0),
+      metode: pertama.metode || '', rekening: lapakSaya.noRekening || ''
     });
-    pesan += 'Total: ' + rp(totalHarga) + '\nStatus saat ini: ' + (LABEL_STATUS[statusGrup] || statusGrup) + '.';
     window.open(tautanWa(pertama.noWa, pesan), '_blank');
+  });
+  const tombolWaSiap = d.querySelector('[data-wa-siap]');
+  if (tombolWaSiap) tombolWaSiap.addEventListener('click', () => {
+    window.open(tautanWa(pertama.noWa, pesanSiapDiambil_(items)), '_blank');
+  });
+  const tombolWaTerima = d.querySelector('[data-wa-terima]');
+  if (tombolWaTerima) tombolWaTerima.addEventListener('click', () => {
+    window.open(tautanWa(pertama.noWa, pesanTerimaKasih_(items, (profilCache && profilCache.lapak && profilCache.lapak.nama) || '')), '_blank');
   });
   const tombol = d.querySelector('[data-langkah]');
   if (tombol) tombol.addEventListener('click', async () => {
@@ -2976,6 +3079,14 @@ function kartuGrupPesanan_(items){
         }
       }
       toast('Status pesanan diperbarui.');
+      if (langkah.status === 'SIAP_DIAMBIL' && pertama.noWa) {
+        const w = window.open(tautanWa(pertama.noWa, pesanSiapDiambil_(items)), '_blank');
+        if (!w) toast('Pesanan siap diambil. Ketuk 📲 Kabari Siap Diambil untuk WA pembeli.');
+      }
+      if (langkah.status === 'SELESAI' && pertama.noWa) {
+        const w2 = window.open(tautanWa(pertama.noWa, pesanTerimaKasih_(items, (profilCache && profilCache.lapak && profilCache.lapak.nama) || '')), '_blank');
+        if (!w2) toast('Pesanan selesai. Ketuk 💬 Terima Kasih untuk WA pembeli.');
+      }
     } catch (e) {
       toast(e.message);
     }
@@ -3479,6 +3590,20 @@ if (kodePesananTersimpan().length) tarikPesananSaya().catch(() => {});
 (function () {
   const idDiminta = new URLSearchParams(location.search).get('produk');
   if (idDiminta) bukaDetail(idDiminta);
+})();
+(function () {
+  // Tautan penilaian dari notif terima kasih: ?pesanan=<kode grup/pesanan>
+  // membuka Pesanan Saya tepat di pesanan itu dan langsung menampilkan
+  // formulir ulasannya bila pesanannya Selesai dan belum diulas.
+  const kodeNilai = (new URLSearchParams(location.search).get('pesanan') || '').toUpperCase();
+  if (!/^(GRP|LKM)-[0-9A-F]{6}$/.test(kodeNilai)) return;
+  simpanKodePesanan(kodeNilai);
+  tarikPesananSaya().then(() => {
+    gambarPesananSaya();
+    bukaLembar('lembar-pesanan-saya');
+    const target = pesananSayaCache.find(p => (p.grup === kodeNilai || p.id === kodeNilai) && p.status === 'SELESAI' && !p.ulasan);
+    if (target) setTimeout(() => bukaUlasan_(target.id, target.namaProduk, (target.lapak || {}).nama || ''), 500);
+  }).catch(() => {});
 })();
 (function () {
   // Tautan bagikan toko: ?lapak=<ID_Lapak> membuka halaman toko itu langsung.
