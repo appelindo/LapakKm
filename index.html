@@ -85,7 +85,7 @@
   .seksi .judul b.oranye{color:var(--oranye-teks);text-transform:uppercase;letter-spacing:.4px}
   .geser{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
   .geser::-webkit-scrollbar{display:none}
-  .kartu-po{flex:0 0 132px;border:1px solid var(--garis);border-radius:6px;overflow:hidden;cursor:pointer;background:#fff}
+  .kartu-baru{flex:0 0 132px;border:1px solid var(--garis);border-radius:6px;overflow:hidden;cursor:pointer;background:#fff}
   .foto{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
   .foto img{width:100%;height:100%;object-fit:cover;display:block}
   .foto .inisial{font-size:46px;font-weight:800;color:rgba(0,0,0,.32)}
@@ -93,10 +93,10 @@
   .f3{background:linear-gradient(135deg,#e8e4fb,#cfc6f5)} .f4{background:linear-gradient(135deg,#fde3ec,#f9c3d7)}
   .f5{background:linear-gradient(135deg,#e2f0fb,#bcd9f5)} .f6{background:linear-gradient(135deg,#fdf6d8,#f7e7a0)}
   .f7{background:linear-gradient(135deg,#ececec,#d5d5d5)} .f8{background:linear-gradient(135deg,#ffe9d6,#ffcfa3)}
-  .isi-po{padding:8px}
-  .isi-po .nm{font-size:12px;height:30px;overflow:hidden;line-height:1.25}
+  .isi-baru{padding:8px}
+  .isi-baru .nm{font-size:12px;height:30px;overflow:hidden;line-height:1.25}
   .harga{color:var(--oranye-teks);font-weight:500;font-size:15px;margin-top:4px}
-  .isi-po .kecil{font-size:12px;color:var(--teks2);margin-top:4px;line-height:1.35}
+  .isi-baru .kecil{font-size:12px;color:var(--teks2);margin-top:4px;line-height:1.35}
 
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--latar);padding:8px}
   .kartu{background:#fff;border-radius:4px;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -316,7 +316,7 @@
   .baris-harga{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:4px}
   .baris-harga .harga{margin-top:0}
   .terjual{font-size:12px;color:#555;white-space:nowrap}
-  .isi-po .terjual{font-size:11px}
+  .isi-baru .terjual{font-size:11px}
   .bintang-teks{color:#b97b06;letter-spacing:1px;font-size:12.5px}
   .btn-ulasan{display:block;width:100%;margin-top:10px;background:#9a6b00;color:#fff;border:none;font-weight:800;font-size:13.5px;padding:10px;border-radius:9px;cursor:pointer}
   .sudah-ulasan{margin-top:10px;background:#fdf6e3;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#7a5b06;line-height:1.55}
@@ -423,7 +423,7 @@
 
     <div class="sp-banner" id="sp-banner">
       <div class="sp-rel" id="sp-rel">
-        <div class="sp-slide sp1"><div class="k">Pre-Order Dibuka</div><div class="b">Jajanan Kantor<br>PO Hari Ini</div><div class="s">Pesan sekarang, dibuat segar oleh teman sekantor</div></div>
+        <div class="sp-slide sp1"><div class="k">Produk Baru</div><div class="b">Jajanan Kantor<br>Baru Diunggah</div><div class="s">Pesan sekarang, dibuat segar oleh teman sekantor</div></div>
         <div class="sp-slide sp2"><div class="k">Antar Gratis</div><div class="b">Diantar ke Ruanganmu</div><div class="s">Ambil di ruangan penjual atau diantar seputar Pusdiklat KM</div></div>
         <div class="sp-slide sp3"><div class="k">Jasa &amp; Preloved</div><div class="b">Dari Teman, Untuk Teman</div><div class="s">Rakit PC, servis, sampai barang preloved berkualitas</div></div>
       </div>
@@ -432,9 +432,9 @@
 
     <div class="kategori" id="bar-kategori"></div>
 
-    <div class="seksi" id="seksi-po" style="display:none">
-      <div class="judul"><b class="oranye"><svg class="icn" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Pre-Order Hari Ini</b></div>
-      <div class="geser" id="daftar-po"></div>
+    <div class="seksi" id="seksi-baru" style="display:none">
+      <div class="judul"><b class="oranye"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg> Produk Baru</b></div>
+      <div class="geser" id="daftar-baru"></div>
     </div>
 
     <div class="seksi" style="padding-bottom:2px">
@@ -990,7 +990,14 @@ async function api(aksi, data){
     throw new Error('Tidak bisa terhubung ke server. Periksa koneksimu lalu coba lagi.');
   }
   if (!balas || balas.ok !== true) {
-    throw new Error((balas && balas.pesan) ? balas.pesan : 'Terjadi kesalahan di server. Coba lagi sebentar lagi.');
+    const pesanGagal = (balas && balas.pesan) ? balas.pesan : 'Terjadi kesalahan di server. Coba lagi sebentar lagi.';
+    // Sesi mati di server (kedaluwarsa / tidak ditemukan / akun nonaktif):
+    // keluarkan pengguna di tempat, jangan menunggu refresh berikutnya.
+    if (kirim.token && typeof sesi !== 'undefined' && sesi && sesi.token === kirim.token
+        && /sesi (tidak ditemukan|sudah kedaluwarsa)|pengguna tidak ditemukan|akun tidak aktif/i.test(pesanGagal)) {
+      keluarKarenaSesiHabis_();
+    }
+    throw new Error(pesanGagal);
   }
   return balas.data;
 }
@@ -1054,8 +1061,41 @@ function bacaSesi(){
     const mentah = localStorage.getItem('lapakkmSesi');
     if (!mentah) return null;
     const s = JSON.parse(mentah);
-    return (s && s.token) ? s : null;
+    if (!s || !s.token) return null;
+    // Sesi yang masa berlakunya sudah lewat tidak dipakai lagi sejak awal.
+    if (s.kedaluwarsa && Date.now() >= Number(s.kedaluwarsa)) {
+      try { localStorage.removeItem('lapakkmSesi'); } catch (e) {}
+      return null;
+    }
+    return s;
   } catch (e) { return null; }
+}
+let timerSesiHabis_ = null;
+function jadwalkanAutoKeluar_(){
+  if (timerSesiHabis_) { clearTimeout(timerSesiHabis_); timerSesiHabis_ = null; }
+  if (sesi && sesi.kedaluwarsa) {
+    const sisa = Number(sesi.kedaluwarsa) - Date.now();
+    if (sisa <= 0) { keluarKarenaSesiHabis_(); return; }
+    timerSesiHabis_ = setTimeout(keluarKarenaSesiHabis_, Math.min(sisa + 500, 2147483000));
+  }
+}
+function periksaSesiHabis_(){
+  if (sesi && sesi.kedaluwarsa && Date.now() >= Number(sesi.kedaluwarsa)) keluarKarenaSesiHabis_();
+}
+/* Keluar otomatis karena sesi habis: bersihkan sesi di perangkat, tutup
+   lembar yang terbuka, dan kembalikan tampilan ke Beranda bila pengguna
+   sedang berada di halaman Penjual/Admin. Tanpa memanggil server, karena
+   sesi di server memang sudah mati. */
+function keluarKarenaSesiHabis_(){
+  if (!sesi) return;
+  if (timerSesiHabis_) { clearTimeout(timerSesiHabis_); timerSesiHabis_ = null; }
+  simpanSesi(null);
+  profilCache = null;
+  try { tutupLembar(true); } catch (e) {}
+  const vp = $('view-penjual'), va = $('view-admin');
+  if ((vp && vp.style.display !== 'none') || (va && va.style.display !== 'none')) tampilView('beranda');
+  else { try { localStorage.setItem('lapakkmView', 'beranda'); } catch (e) {} }
+  toast('Sesi kamu sudah habis. Silakan masuk lagi untuk berjualan.');
 }
 function simpanSesi(s){
   sesi = s;
@@ -1064,6 +1104,7 @@ function simpanSesi(s){
     else localStorage.removeItem('lapakkmSesi');
   } catch (e) {}
   segarkanUiSesi();
+  jadwalkanAutoKeluar_();
 }
 function segarkanUiSesi(){
   const tombol = $('btn-masuk');
@@ -1107,7 +1148,7 @@ async function muatKatalog(){
     renderKatalog();
   } catch (e) {
     $('daftar-produk').innerHTML = '';
-    $('seksi-po').style.display = 'none';
+    $('seksi-baru').style.display = 'none';
     $('katalog-status').style.display = '';
     const rkGagal = $('rangka-katalog'); if (rkGagal) rkGagal.style.display = 'none';
     $('katalog-status').textContent = 'Maaf, katalog belum bisa dimuat. ' + e.message;
@@ -1227,12 +1268,12 @@ function kartuHtml(p, kecil){
   const barisHarga = '<div class="baris-harga"><span class="harga">' + hargaTampil(p) + '</span>' +
     '<span class="terjual">' + (Number(p.terjual) || 0) + ' terjual</span></div>';
   if (kecil) {
-    const infoPo = p.tglAmbil ? 'Ambil: ' + esc(p.tglAmbil) : ('Stok: ' + esc(p.stok == null ? '–' : p.stok));
+    const infoKecil = p.tglAmbil ? 'Ambil: ' + esc(p.tglAmbil) : ('Stok: ' + esc(p.stok == null ? '–' : p.stok));
     const stokN = Number(p.stok), terjN = Number(p.terjual) || 0;
     const barisLaris = (p.stok != null && isFinite(stokN) && (terjN + stokN) > 0)
       ? '<div class="baris-laris"><i style="width:' + Math.max(4, Math.round(terjN / (terjN + stokN) * 100)) + '%"></i><u>TERJUAL ' + terjN + '</u></div>' : '';
     return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
-      '<div class="isi-po"><div class="nm">' + esc(p.nama) + '</div>' + nilaiHtml + barisHarga + barisLaris + '<div class="kecil">' + infoPo + '</div></div>';
+      '<div class="isi-baru"><div class="nm">' + esc(p.nama) + '</div>' + nilaiHtml + barisHarga + barisLaris + '<div class="kecil">' + infoKecil + '</div></div>';
   }
   return '<div class="foto ' + kelasWarna(p.nama) + '">' + fotoHtml(p.fotoUrl, p.nama) + lencanaMode + lencanaHabis + '</div>' +
     '<div class="isi"><div class="nm">' + esc(p.nama) + '</div>' + nilaiHtml + barisHarga +
@@ -1241,33 +1282,34 @@ function kartuHtml(p, kecil){
     '<button class="btn-order" ' + (habis ? 'disabled' : '') + '>' + (habis ? 'Stok Habis' : '<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/><path d="M2.5 3.5h2.3l2.4 11.4a1.6 1.6 0 0 0 1.6 1.3h8.3a1.6 1.6 0 0 0 1.6-1.3L20.3 7H5.9"/></svg> Order') + '</button>' +
     '<button class="btn-keranjang" ' + (habis ? 'disabled' : '') + '>＋ Keranjang</button></div>';
 }
-/* Animasi lajur PO: bergeser perlahan ke kiri dan berputar tanpa putus.
-   Berhenti sejenak sesudah disentuh/digeser manual; hormati pengurangan
-   gerak dari sistem. Satu putaran rAF bersama, dimulai ulang tiap render. */
-let poAnimasiId = null;
-let poJedaSampai = 0;
-function mulaiAnimasiPo_(){
-  const el = $('daftar-po');
-  if (poAnimasiId) { cancelAnimationFrame(poAnimasiId); poAnimasiId = null; }
-  if (!el || !el.querySelector('.kartu-po.duplikat')) return;
+/* Animasi lajur Produk Baru: bergeser perlahan ke kiri dan berputar tanpa
+   putus. Berhenti sejenak sesudah disentuh/digeser manual; hormati
+   pengurangan gerak dari sistem. Satu putaran rAF bersama, dimulai ulang
+   tiap render. */
+let baruAnimasiId = null;
+let baruJedaSampai = 0;
+function mulaiAnimasiBaru_(){
+  const el = $('daftar-baru');
+  if (baruAnimasiId) { cancelAnimationFrame(baruAnimasiId); baruAnimasiId = null; }
+  if (!el || !el.querySelector('.kartu-baru.duplikat')) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!el.dataset.jedaTerpasang) {
     el.dataset.jedaTerpasang = '1';
-    const jeda = () => { poJedaSampai = performance.now() + 4000; };
+    const jeda = () => { baruJedaSampai = performance.now() + 4000; };
     el.addEventListener('pointerdown', jeda);
     el.addEventListener('touchstart', jeda, { passive: true });
     el.addEventListener('wheel', jeda, { passive: true });
   }
   let terakhir = 0;
   const langkah = (t) => {
-    poAnimasiId = requestAnimationFrame(langkah);
-    if (!el.isConnected || !$('seksi-po') || $('seksi-po').style.display === 'none') { terakhir = t; return; }
-    if (document.hidden || t < poJedaSampai) { terakhir = t; return; }
+    baruAnimasiId = requestAnimationFrame(langkah);
+    if (!el.isConnected || !$('seksi-baru') || $('seksi-baru').style.display === 'none') { terakhir = t; return; }
+    if (document.hidden || t < baruJedaSampai) { terakhir = t; return; }
     if (terakhir) {
       const dt = Math.min(t - terakhir, 80);
       el.scrollLeft += dt * 0.03; // ±30 px per detik
-      const pertama = el.querySelector('.kartu-po:not(.duplikat)');
-      const salinan = el.querySelector('.kartu-po.duplikat');
+      const pertama = el.querySelector('.kartu-baru:not(.duplikat)');
+      const salinan = el.querySelector('.kartu-baru.duplikat');
       if (pertama && salinan) {
         const periode = salinan.offsetLeft - pertama.offsetLeft;
         if (periode > 0 && el.scrollLeft >= periode) el.scrollLeft -= periode;
@@ -1275,36 +1317,41 @@ function mulaiAnimasiPo_(){
     }
     terakhir = t;
   };
-  poAnimasiId = requestAnimationFrame(langkah);
+  baruAnimasiId = requestAnimationFrame(langkah);
 }
 function renderKatalog(){
   tandaRender_ = tandaKatalog_(semuaProduk);
   const hasil = semuaProduk.filter(cocokFilter);
-  /* Bagian PO */
-  const po = hasil.filter(p => p.mode === 'PO');
-  const elPo = $('daftar-po');
-  elPo.innerHTML = '';
-  $('seksi-po').style.display = po.length ? '' : 'none';
-  po.forEach(p => {
+  /* Bagian headline: Produk Baru, yaitu jualan yang paling baru diunggah
+     penjual. Urutan memakai nomor baris sheet dari server (urutan): baris
+     paling bawah = unggahan paling baru. Bila urutan belum ada (server
+     lama), dipakai urutan katalog apa adanya yang juga urutan unggah.
+     Paling banyak 10 produk supaya lajur tetap ringkas. */
+  const baru = hasil.map((p, i) => ({ p: p, u: isFinite(Number(p.urutan)) && Number(p.urutan) > 0 ? Number(p.urutan) : i }))
+    .sort((a, b) => b.u - a.u).slice(0, 10).map(x => x.p);
+  const elBaru = $('daftar-baru');
+  elBaru.innerHTML = '';
+  $('seksi-baru').style.display = baru.length ? '' : 'none';
+  baru.forEach(p => {
     const d = document.createElement('div');
-    d.className = 'kartu-po';
+    d.className = 'kartu-baru';
     d.innerHTML = kartuHtml(p, true);
     d.addEventListener('click', () => bukaDetail(p.id));
-    elPo.appendChild(d);
+    elBaru.appendChild(d);
   });
   // Animasi jalan ke kiri: daftar digandakan supaya bisa berputar tanpa
   // putus; salinannya berfungsi sama seperti kartu asli (ketuk -> detail).
-  if (po.length >= 2) {
-    po.forEach(p => {
+  if (baru.length >= 2) {
+    baru.forEach(p => {
       const d = document.createElement('div');
-      d.className = 'kartu-po duplikat';
+      d.className = 'kartu-baru duplikat';
       d.setAttribute('aria-hidden', 'true');
       d.innerHTML = kartuHtml(p, true);
       d.addEventListener('click', () => bukaDetail(p.id));
-      elPo.appendChild(d);
+      elBaru.appendChild(d);
     });
   }
-  mulaiAnimasiPo_();
+  mulaiAnimasiBaru_();
   /* Grid umum */
   const grid = $('daftar-produk');
   grid.innerHTML = '';
@@ -2264,7 +2311,7 @@ $('lg-masuk').addEventListener('click', async () => {
   tombol.disabled = true; tombol.textContent = 'Memeriksa…';
   try {
     const data = await api('login', { nip: nip, pin: pin });
-    simpanSesi({ token: data.token, nama: data.nama, peran: data.peran, idLapak: data.idLapak });
+    simpanSesi({ token: data.token, nama: data.nama, peran: data.peran, idLapak: data.idLapak, kedaluwarsa: data.kedaluwarsa || (Date.now() + 12 * 60 * 60 * 1000) });
     $('lg-pin').value = '';
     tutupLembar();
     toast('Selamat datang, ' + (data.nama || 'Penjual') + '.');
@@ -2295,7 +2342,7 @@ $('lg-daftar').addEventListener('click', async () => {
   tombol.disabled = true; tombol.textContent = 'Mendaftar…';
   try {
     const data = await api('daftar', { nama: nama, pin: pin });
-    simpanSesi({ token: data.token, nama: data.nama, peran: data.peran, idLapak: data.idLapak });
+    simpanSesi({ token: data.token, nama: data.nama, peran: data.peran, idLapak: data.idLapak, kedaluwarsa: data.kedaluwarsa || (Date.now() + 12 * 60 * 60 * 1000) });
     $('df-pin').value = ''; $('df-pin2').value = '';
     tutupLembar();
     toast('Akunmu sudah jadi, ' + (data.nama || 'Penjual') + '. Sekarang lengkapi profil lapakmu, ya.');
@@ -3303,6 +3350,19 @@ $('ps-cari-btn').addEventListener('click', async () => {
 /* ================= Awal ================= */
 bangunKategori();
 segarkanUiSesi();
+jadwalkanAutoKeluar_();
+setInterval(periksaSesiHabis_, 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) periksaSesiHabis_(); });
+window.addEventListener('focus', periksaSesiHabis_);
+(function sinkronKedaluwarsaSesi_(){
+  // Sesi lama (tersimpan sebelum fitur ini ada) belum punya kedaluwarsa di
+  // perangkat: ambil masa berlakunya dari server sekali di awal. Bila
+  // server menjawab sesi mati, api() sudah mengeluarkan pengguna di tempat.
+  if (!sesi || sesi.kedaluwarsa) return;
+  api('cekSesi', { token: sesi.token }).then(d => {
+    if (d && d.kedaluwarsa && sesi) simpanSesi(Object.assign({}, sesi, { kedaluwarsa: d.kedaluwarsa }));
+  }).catch(() => {});
+})();
 (function layarSambut(){
   const s = $('layar-sambut');
   if (!s) return;
