@@ -84,6 +84,12 @@
   .seksi .judul b{font-size:15px}
   .seksi .judul b.oranye{color:var(--oranye-teks);text-transform:uppercase;letter-spacing:.4px}
   .geser{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .kartu-toko{flex:0 0 216px;border:1px solid var(--garis);border-radius:6px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px}
+  .kartu-toko .ava{width:44px;height:44px;border-radius:50%;background:var(--oranye-muda);color:var(--oranye-teks);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;flex:0 0 44px;overflow:hidden}
+  .kartu-toko .ava img{width:100%;height:100%;object-fit:cover}
+  .kartu-toko .badan{flex:1;min-width:0}
+  .kartu-toko .nm-toko{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kartu-toko .mt-toko{font-size:11.5px;color:var(--teks2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   .geser::-webkit-scrollbar{display:none}
   .kartu-baru{flex:0 0 132px;border:1px solid var(--garis);border-radius:6px;overflow:hidden;cursor:pointer;background:#fff}
   .foto{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
@@ -440,6 +446,11 @@
     <div class="seksi" id="seksi-laris" style="display:none">
       <div class="judul"><b class="oranye"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Produk Terlaris</b></div>
       <div class="geser" id="daftar-laris"></div>
+    </div>
+
+    <div class="seksi" id="seksi-toko" style="display:none">
+      <div class="judul"><b class="oranye"><svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg> Toko di LapakKM</b></div>
+      <div class="geser" id="daftar-toko"></div>
     </div>
 
     <div class="seksi" style="padding-bottom:2px">
@@ -1297,7 +1308,7 @@ function mulaiAnimasiLajur_(idEl, idSeksi){
   const el = $(idEl);
   const st = rekLajur_(idEl);
   if (st.raf) { cancelAnimationFrame(st.raf); st.raf = null; }
-  if (!el || !el.querySelector('.kartu-baru.duplikat')) return;
+  if (!el || !el.querySelector('.duplikat')) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!el.dataset.jedaTerpasang) {
     el.dataset.jedaTerpasang = '1';
@@ -1315,8 +1326,8 @@ function mulaiAnimasiLajur_(idEl, idSeksi){
     if (terakhir) {
       const dt = Math.min(t - terakhir, 80);
       el.scrollLeft += dt * 0.03; // ±30 px per detik
-      const pertama = el.querySelector('.kartu-baru:not(.duplikat)');
-      const salinan = el.querySelector('.kartu-baru.duplikat');
+      const pertama = el.querySelector(':scope > *:not(.duplikat)');
+      const salinan = el.querySelector(':scope > .duplikat');
       if (pertama && salinan) {
         const periode = salinan.offsetLeft - pertama.offsetLeft;
         if (periode > 0 && el.scrollLeft >= periode) el.scrollLeft -= periode;
@@ -1350,6 +1361,28 @@ function isiLajur_(el, daftar){
     });
   }
 }
+/* Mengisi lajur Toko: satu kartu per toko (foto/inisial, nama, tim dan
+   ruangan, jumlah produk dan total terjual). Ketuk kartu membuka halaman
+   toko itu. Daftar digandakan untuk animasi putar, sama seperti lajur
+   produk. */
+function isiLajurToko_(el, daftar){
+  el.innerHTML = '';
+  const buat = (t, duplikat) => {
+    const l = t.lapak;
+    const d = document.createElement('div');
+    d.className = 'kartu-toko' + (duplikat ? ' duplikat' : '');
+    if (duplikat) d.setAttribute('aria-hidden', 'true');
+    const meta = [l.tim, l.ruangan].filter(Boolean).join(' · ');
+    d.innerHTML = '<div class="ava">' + (l.fotoUrl ? '<img src="' + esc(l.fotoUrl) + '" alt="">' : esc((l.nama || 'T').trim().charAt(0).toUpperCase())) + '</div>' +
+      '<div class="badan"><div class="nm-toko">' + esc(l.nama || 'Toko Penjual') + '</div>' +
+      (meta ? '<div class="mt-toko">' + esc(meta) + '</div>' : '') +
+      '<div class="mt-toko">' + t.jumlah + ' produk' + (t.terjual ? ' · ' + t.terjual + ' terjual' : '') + '</div></div>';
+    d.addEventListener('click', () => bukaToko({ id: l.id, nama: l.nama, tim: l.tim, ruangan: l.ruangan, noWa: l.noWa, fotoUrl: l.fotoUrl }));
+    el.appendChild(d);
+  };
+  daftar.forEach(t => buat(t, false));
+  if (daftar.length >= 2) daftar.forEach(t => buat(t, true));
+}
 function renderKatalog(){
   tandaRender_ = tandaKatalog_(semuaProduk);
   const hasil = semuaProduk.filter(cocokFilter);
@@ -1375,6 +1408,25 @@ function renderKatalog(){
   $('seksi-laris').style.display = laris.length ? '' : 'none';
   isiLajur_($('daftar-laris'), laris);
   mulaiAnimasiLajur_('daftar-laris', 'seksi-laris');
+  /* Lajur Toko (permintaan Selby 19 Nov 2026): baris ketiga di bawah
+     Produk Terlaris, berisi toko-toko yang punya jualan pada hasil
+     saring saat ini. Diurutkan dari total terjual toko terbanyak, lalu
+     jumlah produk terbanyak, lalu nama. Maksimal 10 toko. */
+  const petaToko = new Map();
+  hasil.forEach(p => {
+    const l = p.lapak;
+    if (!l || !l.id) return;
+    let t = petaToko.get(l.id);
+    if (!t) { t = { lapak: l, jumlah: 0, terjual: 0 }; petaToko.set(l.id, t); }
+    t.jumlah++;
+    t.terjual += Number(p.terjual) || 0;
+  });
+  const toko = Array.from(petaToko.values())
+    .sort((a, b) => (b.terjual - a.terjual) || (b.jumlah - a.jumlah) || String(a.lapak.nama || '').localeCompare(String(b.lapak.nama || '')))
+    .slice(0, 10);
+  $('seksi-toko').style.display = toko.length ? '' : 'none';
+  isiLajurToko_($('daftar-toko'), toko);
+  mulaiAnimasiLajur_('daftar-toko', 'seksi-toko');
   /* Grid umum */
   const grid = $('daftar-produk');
   grid.innerHTML = '';
